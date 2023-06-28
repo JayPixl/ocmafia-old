@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  username  String    @unique
+  slug      String
+  password  String
+  clearance Clearance @default(USER)
+  avatar    Avatar
+}
+
+type Avatar {
+  avatarType  AvatarTypes  @default(COLOR)
+  avatarColor AvatarColors @default(BLUE)
+  avatarUrl   String?
+}
+
+enum AvatarTypes {
+  IMAGE
+  COLOR
+}
+
+enum AvatarColors {
+  RED
+  BLUE
+  GREEN
+}
+
+enum Clearance {
+  USER
+  ADMIN
+}
