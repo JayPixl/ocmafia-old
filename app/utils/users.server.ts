@@ -1,9 +1,8 @@
-import { createCookieSessionStorage } from "@remix-run/node";
+import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import { prisma } from "./prisma.server";
 import bcrypt from 'bcrypt'
 import { Clearance, User } from "@prisma/client";
 import { clearanceMap } from "./constants";
-import { Params } from "@remix-run/react";
 
 const saltRounds: number = 10;
 
@@ -140,7 +139,7 @@ export const getUser: (request: Request) => Promise<{
     if (!userId) return { error: "Invalid User ID", status: 400, user: undefined }
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) return { error: "User not found in database", status: 400, user: undefined }
+    if (!user) throw redirect('/logout')
 
     return { user }
 }
@@ -177,17 +176,37 @@ export const requireUserSession: (request: Request, redirectTo: string) => Promi
 export const requireClearance: (request: Request, clearance: Clearance) => Promise<{
     error?: string,
     authorized?: boolean,
-    status?: number
+    status?: number,
+    user?: User
 }> = async (request: Request, clearance: Clearance) => {
     const { user } = await getUser(request)
     if (user?.clearance === undefined) return { error: "Could not find security level for this user", authorized: false, status: 404 }
 
     const res = findInMap(user.clearance, clearanceMap).indexOf(clearance)
-    if (res !== -1) return { authorized: true }
-    else return { error: "User unauthorized", authorized: false, status: 401 }
+    if (res !== -1) return { authorized: true, user }
+    else return { error: "User unauthorized", authorized: false, status: 401, user }
 }
 
 const findInMap = (key: string, obj: object) => {
     return Object.values(obj)[Object.keys(obj).indexOf(key)]
 }
 
+export const authenticateAdmin: (request: Request, password: string) => Promise<{
+    authenticated: boolean,
+    error?: string,
+    status?: number
+}> = async (request, password) => {
+    const { user } = await getUser(request)
+    if (!user) return { authenticated: false, error: "Could not find user in database", status: 404 }
+    if (password !== process.env.ADMIN_KEY?.toString()) return { authenticated: false, error: "Unauthorized", status: 401 }
+
+    const result = await prisma.user.update({
+        where: {
+            id: user.id
+        },
+        data: {
+            clearance: "ADMIN"
+        }
+    })
+    return { authenticated: true }
+}

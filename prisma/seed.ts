@@ -5,7 +5,7 @@ async function main() {
     (await prisma.user.findMany()).map(async user => {
         const update = await prisma.user.update({
             where: { id: user.id },
-            data: { slug: user.username.toLowerCase() },
+            data: { crowns: 0, rubies: 0 },
         })
         updates.push(update)
     })

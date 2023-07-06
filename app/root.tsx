@@ -29,6 +29,7 @@ const googleFonts: any = [
 export const links: LinksFunction = () => [
   ...googleFonts,
   { rel: "stylesheet", href: stylesheet },
+  { rel: "icon", href: '/images/ocm_website_icon.ico' },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
 

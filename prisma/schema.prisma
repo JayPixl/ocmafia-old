@@ -17,6 +17,82 @@ model User {
   password  String
   clearance Clearance @default(USER)
   avatar    Avatar
+  crowns    Int?
+  rubies    Int?
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt()
+
+  characters    Character[] @relation("OwnedCharacters")
+  activeGame    Game?       @relation(references: [id], fields: [activeGameId], onDelete: Cascade, "PlayerParticipant")
+  activeGameId  String?     @db.ObjectId
+  hostingGame   Game?       @relation(references: [id], fields: [hostingGameId], "GameHosts")
+  hostingGameId String?     @db.ObjectId
+}
+
+model Character {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  displayName    String
+  pronouns       String
+  stats          Stats
+  specialAbility SpecialAbility
+  crowns         Int
+  strikes        Int
+  description    String
+  avatarUrl      String?
+  imageUrls      String[]
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt()
+
+  owner        User    @relation(references: [id], fields: [ownerId], onDelete: Cascade, "OwnedCharacters")
+  ownerId      String  @db.ObjectId
+  activeGame   Game?   @relation(references: [id], fields: [activeGameId], "CharacterParticipant")
+  activeGameId String? @db.ObjectId
+}
+
+model Game {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  location String
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt()
+
+  currentPhase            Phase       @default(DAY)
+  characterRoles          Role[]      @relation(references: [id], fields: [roleIds], "ActiveGameRoles")
+  roleIds                 String[]    @db.ObjectId
+  characterStatuses       Status[]
+  hosts                   User[]      @relation("GameHosts")
+  participatingCharacters Character[] @relation("CharacterParticipant")
+  participatingPlayers    User[]      @relation("PlayerParticipant")
+}
+
+model Role {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt()
+
+  alignment   Alignment
+  description String
+  imageUrl    String?
+  activeGames Game[]    @relation(references: [id], fields: [gameIds], "ActiveGameRoles")
+  gameIds     String[]  @db.ObjectId
+}
+
+type SpecialAbility {
+  name        String
+  description String
+}
+
+type Stats {
+  strength Int
+  stealth  Int
+  skill    Int
+  charisma Int
 }
 
 type Avatar {
@@ -39,4 +115,22 @@ enum AvatarColors {
 enum Clearance {
   USER
   ADMIN
+}
+
+enum Status {
+  ALIVE
+  WOUNDED
+  DEAD
+}
+
+enum Alignment {
+  TOWN
+  MAFIA
+  NEUTRAL
+  HOSTILE
+}
+
+enum Phase {
+  DAY
+  NIGHT
 }
