@@ -40,7 +40,6 @@ export const login: (form: LoginForm) => Promise<{
     status?: number,
     redirect?: any
 }> = async (form) => {
-    console.log(`Logging in user: ${form.username} ${form.password}`)
 
     let match = (await prisma.user.findMany({
         where: {
@@ -63,7 +62,6 @@ export const signup: (form: SignupForm) => Promise<{
     redirect?: any,
     status?: number
 }> = async (form) => {
-    console.log(`Creating user: ${form.username} ${form.password}`)
 
     const match = (await prisma.user.findMany({ where: { username: { equals: form.username, mode: 'insensitive' } } }))[0]
 
