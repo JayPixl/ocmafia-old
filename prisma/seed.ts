@@ -2,10 +2,10 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 async function main() {
     let updates: any[] = [];
-    (await prisma.user.findMany()).map(async user => {
-        const update = await prisma.user.update({
+    (await prisma.character.findMany()).map(async user => {
+        const update = await prisma.character.update({
             where: { id: user.id },
-            data: { crowns: 0, rubies: 0 },
+            data: { status: "ACTIVE" },
         })
         updates.push(update)
     })

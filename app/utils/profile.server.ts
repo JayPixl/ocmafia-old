@@ -10,14 +10,17 @@ export const getProfileData: (request: Request, params: Params) => Promise<{
 }> = async (request: Request, params: Params) => {
     let { user } = await getUser(request)
 
-    const data = (await prisma.user.findMany({
+    const data = (await prisma.user.findFirst({
         where: {
             username: {
                 equals: params.userId,
                 mode: 'insensitive'
             }
+        },
+        include: {
+            characters: true
         }
-    }))[0]
+    }))
 
     if (data?.username === user?.username) {
         return {
@@ -32,6 +35,8 @@ export const getProfileData: (request: Request, params: Params) => Promise<{
             profileData: {
                 username: data?.username,
                 avatar: data?.avatar,
+                crowns: data?.crowns,
+                rubies: data?.rubies
             }
         }
     }

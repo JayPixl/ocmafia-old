@@ -14,7 +14,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function Games() {
     const { user, games }: { user?: User, games?: Game[] } = useLoaderData()
     return (
-        <Layout user={user} navigation={true}>
+        <Layout user={user} navigation={true} navArray={[{ name: 'Games', url: `/games`, id: 'games' }]}>
             <div>
                 All Games
             </div>

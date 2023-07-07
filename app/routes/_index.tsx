@@ -24,17 +24,17 @@ export default function Index() {
     <Layout user={user} navigation={true}>
       <div
         style={{ backgroundImage: "url('/images/mafia-by-k1tty.png')" }}
-        className="bg-cover bg-center w-full h-[30rem]"
+        className="bg-cover bg-center w-full h-[35rem]"
       >
         <div className="h-full w-full backdrop-blur-sm backdrop-brightness-50 flex flex-col p-5 justify-center items-center text-center">
           <div className="font-bold text-5xl p-5">
             Welcome to OC Mafia!
           </div>
-          <Link to={'/login'}>
+          {!user && <Link to={'/login'}>
             <div className="text-3xl border-[3px] text-white hover:border-dogwood rounded-xl py-2 px-3 self-center mt-8 hover:bg-none bg-gradient-to-b from-bittersweet to-cinnabar border-bittersweet hover:text-dogwood transition md:text-2xl">
               Get Started
             </div>
-          </Link>
+          </Link>}
         </div>
       </div>
     </Layout>

@@ -87,7 +87,9 @@ export const createUser: (form: SignupForm) => Promise<any> = async (form: Signu
             avatar: {
                 avatarType: "COLOR",
                 avatarColor: "BLUE"
-            }
+            },
+            crowns: 0,
+            rubies: 0
         }
     })
 }

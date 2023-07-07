@@ -21,7 +21,14 @@ export default function EditGames() {
     const params = useParams()
 
     return (
-        <Layout user={user} navigation={true}>
+        <Layout
+            user={user}
+            navigation={true}
+            navArray={[
+                { name: 'Games', url: `/games`, id: 'games' },
+                { name: game?.name || '', url: `/games/${params?.gameId}`, id: params?.gameId || '', parent: 'games' }
+            ]}
+        >
             <div>
                 Edit Game
             </div>
