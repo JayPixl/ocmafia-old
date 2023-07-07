@@ -16,14 +16,26 @@ export const action: ActionFunction = async ({ request }) => {
     const form = await request.formData()
     const username = form.get("username")
     const password = form.get("password")
+    const confirmPassword = form.get("confirmPassword")
     const action = form.get("_action")
 
     if (
         typeof username !== 'string' ||
         typeof password !== 'string' ||
+        (action === 'signup' && typeof confirmPassword !== 'string') ||
         typeof action !== 'string'
     ) {
         return json({ error: "Invalid data format" }, { status: 404 })
+    }
+
+    if (action === 'signup' && password !== confirmPassword) {
+        return json({
+            error: "Confirmation password does not match the password!",
+            fields: { username, password, confirmPassword },
+            action
+        }, {
+            status: 404
+        })
     }
 
     const searchParams = new URL(request.url).searchParams.get('redirectTo') || '/'
@@ -31,7 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
     switch (action) {
         case 'login': {
             const result = await login({ username, password, action, redirectTo: searchParams })
-            if (result.error) return json({ error: result.error, fields: result?.fields || null }, { status: result?.status || 400 })
+            if (result.error) return json({ action, error: result.error, fields: result?.fields || null }, { status: result?.status || 400 })
             else return redirect(result?.redirect?.path || '/', result?.redirect?.body || {})
         }
         case 'signup': {
@@ -45,7 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
             }
 
             const result = await signup({ username, password, action, redirectTo: searchParams })
-            if (result.error) return json({ error: result.error, fields: result?.fields || null, fieldErrors: result?.fieldErrors || null }, { status: result?.status || 400 })
+            if (result.error) return json({ action, error: result.error, fields: result?.fields || null, fieldErrors: result?.fieldErrors || null }, { status: result?.status || 400 })
             else return redirect(result?.redirect?.path || '/', result?.redirect?.body || {})
         }
         default: {
@@ -59,7 +71,8 @@ export default function Login() {
 
     const [inputs, setInputs] = useState({
         username: actionData?.fields?.username || '',
-        password: actionData?.fields?.password || ''
+        password: actionData?.fields?.password || '',
+        confirmPassword: actionData?.fields?.confirmPassword || ''
     })
 
     const [formError] = useState(actionData?.error || '')
@@ -98,6 +111,14 @@ export default function Login() {
                             display="Password"
                             error={actionData?.fieldErrors?.password}
                         />
+                        {login !== 'login' && <InputField
+                            type="password"
+                            onChange={e => handleChange(e, 'confirmPassword')}
+                            name="confirmPassword"
+                            value={inputs.confirmPassword}
+                            display="Confirm Password"
+                            error={actionData?.fieldErrors?.confirmPassword}
+                        />}
                         <div
                             onClick={() => setLogin(login == 'login' ? 'signup' : 'login')}
                             className="text-base text-tropicalindigo text-left cursor-pointer"
