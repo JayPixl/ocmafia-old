@@ -22,23 +22,10 @@ export const getProfileData: (request: Request, params: Params) => Promise<{
         }
     }))
 
-    if (data?.username === user?.username) {
-        return {
-            user,
-            owner: true,
-            profileData: data
-        }
-    } else {
-        return {
-            user,
-            owner: false,
-            profileData: {
-                username: data?.username,
-                avatar: data?.avatar,
-                crowns: data?.crowns,
-                rubies: data?.rubies
-            }
-        }
+    return {
+        user,
+        owner: data?.username === user?.username,
+        profileData: data
     }
 }
 

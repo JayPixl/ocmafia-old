@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -20,14 +17,28 @@ model User {
   crowns    Int
   rubies    Int
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
 
   characters    Character[] @relation("OwnedCharacters")
   activeGame    Game?       @relation(references: [id], fields: [activeGameId], onDelete: Cascade, "PlayerParticipant")
   activeGameId  String?     @db.ObjectId
   hostingGame   Game?       @relation(references: [id], fields: [hostingGameId], "GameHosts")
   hostingGameId String?     @db.ObjectId
+  inbox         Inbox?      @relation("Inbox")
+
+  followedBy    User[]   @relation("UserFollows", fields: [followedByIDs], references: [id])
+  followedByIDs String[] @db.ObjectId
+  following     User[]   @relation("UserFollows", fields: [followingIDs], references: [id])
+  followingIDs  String[] @db.ObjectId
+}
+
+model Inbox {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  inboxItems InboxItem[]
+  user       User        @relation("Inbox", fields: [userId], references: [id])
+  userId     String      @unique @db.ObjectId
 }
 
 model Character {
@@ -46,8 +57,8 @@ model Character {
   avatarUrl      String?
   imageUrls      String[]
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
 
   owner        User    @relation(references: [id], fields: [ownerId], onDelete: Cascade, "OwnedCharacters")
   ownerId      String  @db.ObjectId
@@ -60,8 +71,8 @@ model Game {
   name     String
   location String
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
 
   currentPhase            Phase       @default(DAY)
   characterRoles          Role[]      @relation(references: [id], fields: [roleIds], "ActiveGameRoles")
@@ -76,14 +87,20 @@ model Role {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
   name String
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
 
   alignment   Alignment
   description String
   imageUrl    String?
   activeGames Game[]    @relation(references: [id], fields: [gameIds], "ActiveGameRoles")
   gameIds     String[]  @db.ObjectId
+}
+
+type InboxItem {
+  message   String
+  read      Boolean
+  createdAt DateTime @default(now())
 }
 
 type SpecialAbility {

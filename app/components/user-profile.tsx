@@ -53,7 +53,7 @@ export default function UserProfile({ loggedIn, owner, profileData }: props) {
                                 </div>
                             </Link>
                         )) : owner ? (
-                            <Link to={`/gm-realm/create/character`}>
+                            <Link to={`/gm-realm/characters/create`}>
                                 <div
                                     className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative flex justify-center items-center"
                                 >
