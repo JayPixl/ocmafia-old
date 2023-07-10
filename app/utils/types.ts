@@ -1,4 +1,4 @@
-import { Character, Game, User } from "@prisma/client";
+import { Character, Game, Inbox, User } from "@prisma/client";
 
 export interface GameWithMods extends Game {
     hosts?: User[],
@@ -7,4 +7,10 @@ export interface GameWithMods extends Game {
 
 export interface CharacterWithMods extends Character {
     owner?: User
+}
+
+export interface UserWithMods extends User {
+    inbox?: Inbox,
+    following?: User[],
+    followers?: User[]
 }

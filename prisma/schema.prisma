@@ -64,6 +64,8 @@ model Character {
   ownerId      String  @db.ObjectId
   activeGame   Game?   @relation(references: [id], fields: [activeGameId], "CharacterParticipant")
   activeGameId String? @db.ObjectId
+
+  @@unique([name, ownerId])
 }
 
 model Game {

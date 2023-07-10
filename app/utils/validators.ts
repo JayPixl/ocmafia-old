@@ -16,3 +16,16 @@ export const validateUsername = (name: string): string | undefined => {
     if (name.length > 15) return `Username cannot be more than 15 characters long`
     if (!usernameRegex.test(name)) return `Username can only contain alphanumeric characters`
 }
+
+export const validateLength = (string: string, maxLength: number, minLength?: number): string | undefined => {
+    return (
+        (minLength && string.length < minLength ? `Must be at least ${minLength} character${minLength !== 1 ? 's' : ''} long` : undefined) ||
+        (string.length > maxLength ? `Cannot be more than ${maxLength} characters long` : undefined)
+    )
+}
+
+export const validateStat: (stat?: number) => string | undefined = (stat) => {
+    if (typeof stat !== 'number') return "Invalid input type"
+    if (stat % 1 !== 0) return "Must be a whole number"
+    if (stat < 1 || stat > 10) return "Must be between 1 and 10"
+}

@@ -89,7 +89,12 @@ export const createUser: (form: SignupForm) => Promise<any> = async (form: Signu
                 avatarColor: "BLUE"
             },
             crowns: 0,
-            rubies: 0
+            rubies: 0,
+            inbox: {
+                create: {
+
+                }
+            }
         }
     })
 }

@@ -14,14 +14,14 @@ export const Modal: React.FC<props> = ({ children, isOpen, ariaLabel, className,
     return (
         <Portal wrapperId="modal">
             <div
-                className="fixed inset-0 overflow-y-auto bg-gray-600 bg-opacity-50"
+                className="fixed inset-0 overflow-y-auto bg-slate-600 bg-opacity-50"
                 aria-labelledby={ariaLabel ?? 'modal-title'}
                 role="dialog"
                 aria-modal="true"
                 onClick={onClick}
             ></div>
-            <div className="fixed inset-0 pointer-events-none flex justify-center items-center max-h-screen overflow-scroll">
-                <div className={`${className} p-4 bg-slate-300 pointer-events-auto max-h-screen rounded-md md:rounded-xl overflow-y-auto text-slate-800`}>
+            <div className="fixed inset-0 pointer-events-none flex justify-center items-center max-h-screen">
+                <div className={`${className} p-4 bg-slate-300 pointer-events-auto max-h-[80%] max-w-[80%] overflow-auto rounded-md md:rounded-xl text-slate-800`}>
                     {children}
                 </div>
             </div>
