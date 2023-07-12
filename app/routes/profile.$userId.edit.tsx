@@ -47,14 +47,14 @@ export default function Edit() {
         return arr
     }
 
-    const loading = useRef(false)
+    const [loading, setLoading] = useState(false)
 
     const handleChange = async (file: File) => {
         const formData = new FormData()
         formData.append("avatar", file)
 
         console.log("Sending")
-        loading.current = true
+        setLoading(l => true)
 
         const result = await fetch('/upload-image?type=avatar', {
             method: "POST",
@@ -63,7 +63,7 @@ export default function Edit() {
 
         const { avatarUrl, error }: { avatarUrl?: string, error?: string } = await result.json()
         setFormData({ ...formData, avatarUrl })
-        loading.current = false
+        setLoading(l => false)
     }
 
     return <Modal isOpen={true} onClick={() => navigate(`/profile/${params.userId}`)} className="w-2/3 md:w-1/3 h-96">
@@ -83,7 +83,7 @@ export default function Edit() {
                         onChange={handleChange}
                         type={'circle'}
                         imageUrl={formData.avatarUrl}
-                        loading={loading.current}
+                        loading={loading}
                     />
             }
             <div className="font-semibold text-xl mb-3">{user.username}</div>
