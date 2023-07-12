@@ -29,6 +29,11 @@ export default function Games() {
             <div>
                 <div><h2>{game?.name}</h2></div>
                 <div>Location: <span>{game?.location}</span></div>
+                <div>
+                    <Link to={`/games/${params.gameId}/reports/`}>
+                        Reports
+                    </Link>
+                </div>
                 {authorized && (
                     <div>
                         <Link to={`/games/${params.gameId}/edit`}>

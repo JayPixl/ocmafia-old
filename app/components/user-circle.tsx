@@ -30,7 +30,10 @@ export default function UserCircle({ avatarType, avatarColor, avatarUrl, usernam
                         ...(avatarUrl ? { backgroundImage: `url('${avatarUrl}')` } as React.CSSProperties : {})
                     }}
                     className={
-                        `flex items-center justify-center rounded-full h-8 w-8 bg-cover`
+                        `${size === 'SMALL' && `h-8 w-8 border-2`} 
+                        ${size === 'LARGE' && `h-16 w-16 border-[3px]`} 
+                        ${size === 'XLARGE' && `h-16 w-16 border-[3px] lg:h-24 lg:w-24 lg:border-[4px]`} 
+                        flex items-center justify-center rounded-full h-8 w-8 bg-cover`
                     }
                 />
             )}

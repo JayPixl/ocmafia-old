@@ -135,16 +135,21 @@ export const getUserId: (request: Request) => Promise<{
     return { error: undefined, userId }
 }
 
-export const getUser: (request: Request) => Promise<{
+export const getUser: (request: Request, password?: boolean) => Promise<{
     error?: string,
     status?: number,
-    user: User | undefined
-}> = async (request: Request) => {
+    user?: User
+}> = async (request, password = false) => {
     const { userId } = await getUserId(request)
-    if (!userId) return { error: "Invalid User ID", status: 400, user: undefined }
+    if (!userId) return { error: "Invalid User ID", status: 400 }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    let user = (await prisma.user.findUnique({ where: { id: userId } }))
     if (!user) throw redirect('/logout')
+
+    if (!password) user = {
+        ...user,
+        password: 'hidden'
+    }
 
     return { user }
 }

@@ -1,6 +1,7 @@
-import { Game, Prisma } from "@prisma/client"
+import { EventTypes, Game, Prisma, Time } from "@prisma/client"
 import { prisma } from "./prisma.server"
 import { getUser, requireClearance } from "./users.server"
+import { GameWithMods } from "./types"
 
 export const createGame: (form: {
     gameName: string,
@@ -12,13 +13,39 @@ export const createGame: (form: {
     const newGame = await prisma.game.create({
         data: {
             name: form.gameName,
-            location: form.location
+            location: form.location,
+            phases: {
+                create: {
+                    time: 'DAY',
+                    dayNumber: 1,
+                }
+            }
+        },
+        include: {
+            phases: {
+                select: {
+                    id: true
+                }
+            }
         }
     })
 
     if (!newGame) return {
         error: "Could not create new game"
     }
+
+    console.log(await prisma.game.update({
+        where: {
+            id: newGame.id
+        },
+        data: {
+            currentPhase: {
+                connect: {
+                    id: newGame?.phases[0]?.id || ''
+                }
+            }
+        }
+    }))
 
     return {
         newGame
@@ -37,6 +64,12 @@ export const getGameById: (
         },
         include: {
             hosts: true,
+            phases: {
+                include: {
+                    events: true
+                }
+            },
+            currentPhase: true,
             participatingCharacters: {
                 include: {
                     owner: true
@@ -310,5 +343,62 @@ export const manageCharacters: (
         return {
             error: "Invalid action"
         }
+    }
+}
+
+export const manageReports: (
+    gameId: string,
+    action: "update" | "add" | "publish" | "delete",
+    fields: {
+        phaseId?: string,
+        type?: EventTypes,
+        message?: string,
+        clues?: string,
+        actorId?: string,
+        targetId?: string
+    },
+) => Promise<{
+    error?: string,
+    newGame?: GameWithMods
+}> = async (gameId, action, fields) => {
+    let { game } = await getGameById(gameId)
+    if (!game) return {
+        error: "Could not find game"
+    }
+
+    if (action === 'add') {
+        if (!fields?.phaseId) return {
+            error: "Could not find phase"
+        }
+
+        const cluesArray = fields?.clues?.split("$$") || []
+
+        const event = await prisma.event.create({
+            data: {
+                draft: true,
+                type: fields?.type || 'KILL',
+                message: fields?.message || '',
+                clues: cluesArray,
+                ...(fields?.targetId ? { target: { connect: { id: fields?.targetId } } } : {}),
+                ...(fields?.actorId ? { actor: { connect: { id: fields?.actorId } } } : {}),
+                phase: {
+                    connect: {
+                        id: fields?.phaseId
+                    }
+                }
+            }
+        })
+
+        if (!event) return {
+            error: "Could not create new event"
+        }
+
+        return {
+            newGame: (await getGameById(gameId) as GameWithMods)
+        }
+    }
+
+    return {
+        error: "Invalid query"
     }
 }

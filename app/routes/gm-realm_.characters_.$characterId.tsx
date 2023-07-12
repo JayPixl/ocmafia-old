@@ -1,5 +1,5 @@
 import { LoaderFunction, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useParams } from "@remix-run/react";
 import Layout from "~/components/layout";
 import { getCharacterbyId } from "~/utils/characters.server";
 import { getUser } from "~/utils/users.server";
@@ -14,6 +14,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function Character() {
     const { user, character, error } = useLoaderData()
+    const params = useParams()
     return (
         <Layout
             user={user}
@@ -47,7 +48,13 @@ export default function Character() {
                             <div>Description:</div>
                             <div>{character.description}</div>
                         </div>
+                        {character?.ownerId === user.id && <div>
+                            <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
+                                Edit
+                            </Link>
+                        </div>}
                     </div>
+
                 ) : (
                     <div>
                         {error}
