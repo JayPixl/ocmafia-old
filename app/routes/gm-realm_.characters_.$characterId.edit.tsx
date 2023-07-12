@@ -45,7 +45,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const fieldErrors = {
         name: validateLength(name, 15, 1),
-        description: validateLength(description, 100, 10),
+        description: validateLength(description, 200, 10),
         pronouns: validateLength(pronouns, 10, 1),
         specialAbilityName: validateLength(specialAbilityName, 20, 1),
         specialAbilityDescription: validateLength(specialAbilityDescription, 50, 1),
