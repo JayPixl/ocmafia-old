@@ -42,7 +42,7 @@ export default function UserProfile({ loggedIn, owner, profileData }: props) {
                     <div className="w-full text-center p-3 text-2xl">Characters</div>
                     <div className="flex flex-row w-full justify-center items-center flex-wrap">
                         {profileData.characters?.length > 0 ? profileData.characters.map(character => (
-                            <Link to={`/gm-realm/characters/${character.id}`}>
+                            <Link to={`/gm-realm/characters/${character.id}`} key={character.id}>
                                 <div
                                     className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative"
                                     style={character.avatarUrl ? { backgroundImage: character.avatarUrl } : undefined}
