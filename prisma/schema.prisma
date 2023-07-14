@@ -27,6 +27,8 @@ model User {
   hostingGameId String?     @db.ObjectId
   inbox         Inbox?      @relation("Inbox")
 
+  sentMessages Message[] @relation("SentMessages")
+
   followedBy    User[]   @relation("UserFollows", fields: [followedByIDs], references: [id])
   followedByIDs String[] @db.ObjectId
   following     User[]   @relation("UserFollows", fields: [followingIDs], references: [id])
@@ -118,6 +120,28 @@ model Event {
 
   phase   Phase  @relation(fields: [phaseId], references: [id], onDelete: Cascade, "PhaseEvents")
   phaseId String @unique @db.ObjectId
+}
+
+model Message {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  content String
+
+  sender   User   @relation(references: [id], fields: [senderId], "SentMessages")
+  senderId String @db.ObjectId
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  room   Chatroom @relation(references: [id], fields: [roomId], "ChatroomMessage")
+  roomId String   @db.ObjectId
+}
+
+model Chatroom {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now())
+  messages  Message[] @relation("ChatroomMessage")
 }
 
 model Role {
