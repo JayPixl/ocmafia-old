@@ -47,7 +47,7 @@ model Character {
   name        String
   displayName String
   pronouns    String
-  status      CharacterStatus?
+  status      CharacterStatus
 
   stats          Stats
   specialAbility SpecialAbility

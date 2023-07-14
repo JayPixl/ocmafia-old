@@ -1,5 +1,6 @@
 import { LoaderFunction, json } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
+import CharacterAvatar from "~/components/character-avatar";
 import Layout from "~/components/layout";
 import { getCharacterbyId } from "~/utils/characters.server";
 import { getUser } from "~/utils/users.server";
@@ -13,7 +14,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 }
 
 export default function Character() {
-    const { user, character, error } = useLoaderData()
+    const { user, character, error } = useLoaderData<typeof loader>()
     const params = useParams()
     return (
         <Layout
@@ -32,11 +33,18 @@ export default function Character() {
             <div>
                 {character ? (
                     <div>
-                        <div>
-                            {character.name}
+                        <div className="flex flex-row items-center">
+                            <CharacterAvatar
+                                avatarUrl={character.avatarUrl}
+                                size="SMALL"
+                            />
+                            <div>{character.name}</div>
                         </div>
                         <div>
                             {character.status}
+                        </div>
+                        <div>
+                            {character.pronouns}
                         </div>
                         <div>
                             {character.crowns} 👑
@@ -47,6 +55,17 @@ export default function Character() {
                         <div>
                             <div>Description:</div>
                             <div>{character.description}</div>
+                        </div>
+                        <div>
+                            <div>Special Ability: {character.specialAbility.name}</div>
+                            <div>{character.specialAbility.description}</div>
+                        </div>
+                        <div>
+                            <div>Stats:</div>
+                            <div>Strength: {character.stats.strength}</div>
+                            <div>Stealth: {character.stats.stealth}</div>
+                            <div>Skill: {character.stats.skill}</div>
+                            <div>Charisma: {character.stats.charisma}</div>
                         </div>
                         {character?.ownerId === user.id && <div>
                             <Link to={`/gm-realm/characters/${params.characterId}/edit`}>

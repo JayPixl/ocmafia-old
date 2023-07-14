@@ -1,6 +1,7 @@
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData, useNavigate, useParams } from "@remix-run/react";
 import { useState } from "react";
+import { ImageUploader } from "~/components/image-uploader";
 import InputField from "~/components/input-field";
 import Layout from "~/components/layout";
 import { Modal } from "~/components/modal";
@@ -30,6 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const stealth = Number(form.get("stealth"))
     const skill = Number(form.get("skill"))
     const charisma = Number(form.get("charisma"))
+    const avatarUrl = form.get("avatarUrl") as string || undefined
 
     const fields = {
         name,
@@ -40,7 +42,8 @@ export const action: ActionFunction = async ({ request, params }) => {
         strength,
         skill,
         stealth,
-        charisma
+        charisma,
+        avatarUrl
     }
 
     const fieldErrors = {
@@ -80,7 +83,8 @@ export const action: ActionFunction = async ({ request, params }) => {
             strength,
             skill,
             stealth
-        }
+        },
+        avatarUrl
     }, params?.characterId || '', request)
 
     if (character) return redirect(`/gm-realm/characters/${character.id}`)
@@ -107,16 +111,49 @@ export default function EditCharacter() {
         skill: actionData?.fields?.skill || character.stats.skill || '',
         specialAbilityName: actionData?.fields?.specialAbilityName || character.specialAbility.name || '',
         specialAbilityDescription: actionData?.fields?.specialAbilityDescription || character.specialAbility.description || '',
+        avatarUrl: actionData?.fields?.avatarUrl || character.avatarUrl || undefined,
     })
+
+    const [loading, setLoading] = useState(false)
+
+    const handleImageChange = async (file: File) => {
+        const formData = new FormData()
+        formData.append("avatar", file)
+
+        setLoading(l => true)
+
+        const result = await fetch('/upload-image?type=avatar', {
+            method: "POST",
+            body: formData
+        })
+
+        const { avatarUrl, error }: { avatarUrl?: string, error?: string } = await result.json()
+        setInputs({ ...inputs, avatarUrl })
+        setLoading(l => false)
+    }
 
     return (
         <Modal isOpen={true} onClick={() => navigate(`/gm-realm/characters/${params.characterId}`)}>
             <div className="w-full md:w-[30rem]">
                 <form method="POST" className="flex flex-col max-w-full">
+                    {inputs.avatarUrl && <input
+                        type="hidden"
+                        name="avatarUrl"
+                        value={inputs.avatarUrl}
+                    />}
                     <div className="text-3xl self-center p-2">
                         Edit Character
                     </div>
 
+                    <div className="w-full flex justify-center">
+                        <ImageUploader
+                            onChange={handleImageChange}
+                            imageUrl={inputs.avatarUrl}
+                            loading={loading}
+                            type="circle"
+                            maxSize={2}
+                        />
+                    </div>
                     <div className="text-red-400 self-center">
                         {actionData?.formError}
                     </div>

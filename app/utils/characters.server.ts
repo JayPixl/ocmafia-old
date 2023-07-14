@@ -51,6 +51,7 @@ export const createCharacter: (
     const character = await prisma.character.create({
         data: {
             ...data,
+            status: 'ACTIVE',
             crowns: 0,
             strikes: 0,
             displayName: data.name,
@@ -84,7 +85,8 @@ export const updateCharacter: (
             skill: number,
             strength: number,
             stealth: number
-        }
+        },
+        avatarUrl?: string
     },
     characterId: string,
     request: Request
