@@ -1,5 +1,5 @@
 import { LoaderFunction, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import Layout from "~/components/layout";
 import { getUser } from "~/utils/users.server";
 
@@ -16,8 +16,10 @@ export default function Archive() {
             navigation={true}
             navArray={[{ name: "Archive", id: "archive", url: "/archive" }]}
         >
-            <div>
-                Archive
+            <div className="flex justify-center items-center">
+                <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8 flex flex-col items-center">
+                    <div className="text-4xl font-bold my-8">Archive</div>
+                </div>
             </div>
         </Layout>
     )

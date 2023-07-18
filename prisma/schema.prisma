@@ -55,7 +55,8 @@ model Character {
   strikes        Int
   description    String
   avatarUrl      String?
-  imageUrls      String[]
+  gallery        String[]
+  profileLink    Link?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
@@ -132,6 +133,11 @@ model Role {
   imageUrl    String?
   activeGames Game[]    @relation(references: [id], fields: [gameIds], "ActiveGameRoles")
   gameIds     String[]  @db.ObjectId
+}
+
+type Link {
+  display String?
+  url     String
 }
 
 type InboxItem {

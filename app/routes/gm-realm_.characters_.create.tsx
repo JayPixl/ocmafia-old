@@ -1,6 +1,7 @@
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
+import { ImageUploader } from "~/components/image-uploader";
 import InputField from "~/components/input-field";
 import Layout from "~/components/layout";
 import Textarea from "~/components/textarea";
@@ -26,6 +27,7 @@ export const action: ActionFunction = async ({ request }) => {
     const stealth = Number(form.get("stealth"))
     const skill = Number(form.get("skill"))
     const charisma = Number(form.get("charisma"))
+    const avatarUrl = form.get("avatarUrl") as string || ''
 
     const fields = {
         name,
@@ -36,7 +38,8 @@ export const action: ActionFunction = async ({ request }) => {
         strength,
         skill,
         stealth,
-        charisma
+        charisma,
+        avatarUrl: avatarUrl || undefined
     }
 
     const fieldErrors = {
@@ -99,8 +102,27 @@ export default function CreateCharacter() {
         charisma: actionData?.fields?.charisma || '5',
         stealth: actionData?.fields?.stealth || '5',
         strength: actionData?.fields?.strength || '5',
-        skill: actionData?.fields?.skill || '5'
+        skill: actionData?.fields?.skill || '5',
+        avatarUrl: actionData?.fields?.avatarUrl || '',
     })
+
+    const [loading, setLoading] = useState(false)
+
+    const handleImageChange = async (file: File) => {
+        const formData = new FormData()
+        formData.append("avatar", file)
+
+        setLoading(l => true)
+
+        const result = await fetch('/upload-image?type=avatar', {
+            method: "POST",
+            body: formData
+        })
+
+        const { avatarUrl, error }: { avatarUrl?: string, error?: string } = await result.json()
+        setInputs({ ...inputs, avatarUrl })
+        setLoading(l => false)
+    }
 
     return (
         <Layout
@@ -114,6 +136,20 @@ export default function CreateCharacter() {
                     <form method="POST">
                         <div className="text-red-400">
                             {actionData?.formError}
+                        </div>
+                        {inputs.avatarUrl && <input
+                            type="hidden"
+                            name="avatarUrl"
+                            value={inputs.avatarUrl}
+                        />}
+                        <div className="w-full flex justify-center">
+                            <ImageUploader
+                                onChange={handleImageChange}
+                                imageUrl={inputs.avatarUrl}
+                                loading={loading}
+                                type="circle"
+                                maxSize={2}
+                            />
                         </div>
                         <InputField
                             type="text"

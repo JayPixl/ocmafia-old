@@ -1,33 +1,86 @@
-import { Game, User } from "@prisma/client";
 import { LoaderFunction, json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import InputField from "~/components/input-field";
+import { useState } from 'react'
 import Layout from "~/components/layout";
-import { getFilteredGames } from "~/utils/games.server";
 import { getUser } from "~/utils/users.server";
+import CharacterAvatar from "~/components/character-avatar";
+import { prisma } from "~/utils/prisma.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const { user } = await getUser(request)
-    const { games } = await getFilteredGames()
-    return json({ user, games })
+    const recentGames = await prisma.game.findMany({
+        select: {
+            id: true,
+            name: true,
+            participatingCharacters: {
+                select: {
+                    _count: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        take: 3
+    })
+    return json({ user, recentGames })
 }
 
 export default function Games() {
-    const { user, games }: { user?: User, games?: Game[] } = useLoaderData()
+    const { user, recentGames } = useLoaderData<typeof loader>()
+    const fetcher = useFetcher()
+    const [inputs, setInputs] = useState({
+        search: ''
+    })
+
+    const handleChange: (input: string) => void = (input) => {
+        setInputs({
+            ...inputs,
+            search: input
+        })
+        const queryParams = new URLSearchParams
+        queryParams.set('name', input)
+        fetcher.load(`/fetch/games?${queryParams}`)
+    }
+
     return (
-        <Layout user={user} navigation={true} navArray={[{ name: 'Games', url: `/games`, id: 'games' }]}>
-            <div>
-                All Games
-            </div>
-            {games?.map(game => (
-                <div key={game.id}>
-                    <div>
-                        <Link to={`/games/${game.id}`}>
-                            {game.name}
-                        </Link>
+        <Layout
+            user={user}
+            navigation={true}
+            navArray={[{ name: "Games", id: "games", url: "/games" }]}
+        >
+            <div className="p-8 flex flex-col items-center w-full">
+                <div className="text-center text-4xl font-semibold">Games</div>
+                <input
+                    className="max-w-[30rem] w-[20rem] px-3 py-2 text-xl text-licorice-800 m-5 rounded-full"
+                    type="search"
+                    onChange={e => handleChange(e.target.value)}
+                    placeholder="Search for Games..."
+                    value={inputs.search}
+                />
+                <div className="w-full flex flex-col justify-start items-start bg-licorice-600 rounded-xl">
+                    {inputs.search.length > 0 ? (fetcher?.data?.results?.length > 0 ? <>
+                        <div className="p-5 text-lg font-semibold">Results:</div>
+                        {fetcher?.data?.results?.map((game: any) => <div className="flex flex-row justify-center items-center w-full p-5" key={game.id}>
+                            <div className="font-semibold text-lg">{game.name}</div>
+                            <div>{game.participatingCharacters._count} active players</div>
+                        </div>)}
+                    </> : (fetcher.state === 'loading' ? <>
+                        <div className="h-8 w-8 border-transparent border-t-licorice-900 border-4 animate-spin rounded-full" />
+                    </> : <>
+                        <div className="p-5 text-2xl font-semibold">No Results!</div>
+                    </>)) : ''}
+                    <div className="w-full flex flex-col justify-start items-center bg-licorice-600 rounded-xl">
+                        <div className="p-5 text-2xl font-semibold">Recent Games:</div>
+                        {recentGames.map((game: any) => <div className="flex flex-row justify-center items-center w-full p-5" key={game.id}>
+                            <div className="font-semibold text-lg">{game.name}</div>
+                            <div>{game.participatingCharacters._count} active players</div>
+                        </div>)}
                     </div>
                 </div>
-            ))
-            }
+
+            </div>
         </Layout>
     )
 }

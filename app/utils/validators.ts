@@ -29,3 +29,11 @@ export const validateStat: (stat?: number) => string | undefined = (stat) => {
     if (stat % 1 !== 0) return "Must be a whole number"
     if (stat < 1 || stat > 10) return "Must be between 1 and 10"
 }
+
+export const validateURL: (string: string) => string | undefined = (string) => {
+    try {
+        const url = new URL(string)
+    } catch (e) {
+        return "Not a valid URL"
+    }
+}

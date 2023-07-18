@@ -1,5 +1,5 @@
 import { LoaderFunction, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import Layout from "~/components/layout";
 import { getUser } from "~/utils/users.server";
 
@@ -16,9 +16,13 @@ export default function GMRealm() {
             navigation={true}
             navArray={[{ name: "Grandmaster's Realm", id: "gm-realm", url: "/gm-realm" }]}
         >
-            <div>
-                Grandmaster's Realm
+            <div className="flex justify-center items-center">
+                <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8 flex flex-col items-center">
+                    <div className="text-4xl font-bold my-8">Grandmaster's Realm</div>
+                    <Link to={`/gm-realm/characters`} className="text-3xl font-semibold my-4 underline hover:no-underline hover:opacity-70">Characters</Link>
+                </div>
             </div>
+
         </Layout>
     )
 }

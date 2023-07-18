@@ -32,46 +32,52 @@ export default function Character() {
         >
             <div>
                 {character ? (
-                    <div>
-                        <div className="flex flex-row items-center">
-                            <CharacterAvatar
-                                avatarUrl={character.avatarUrl}
-                                size="SMALL"
-                            />
-                            <div>{character.name}</div>
+                    <div className="flex justify-center items-center">
+                        <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8">
+                            <div className="flex w-full items-end justify-start border-b-2 border-licorice-800 pb-2">
+                                <CharacterAvatar
+                                    avatarUrl={character.avatarUrl}
+                                    size="LARGE"
+                                />
+                                <div className="flex flex-col justify-between">
+                                    {character.status === 'ACTIVE' ? <h1 className="text-4xl font-semibold mx-4">
+                                        {character.name}
+                                    </h1> : <h1 className="text-3xl font-semibold mx-4 opacity-80">
+                                        <del>{character.name} (BANNED)</del>
+                                    </h1>}
+
+                                    <div className="px-3 pt-1 lg:pt-3 lg:px-8 font-semibold">
+                                        <span className="mr-3">({character.pronouns})</span> {character.crowns} 👑 {character.strikes} ❌
+                                    </div>
+                                </div>
+
+                            </div>
+                            {character?.profileLink?.url && <div className="italic underline my-1">
+                                <Link to={character?.profileLink?.url}>
+                                    {character?.profileLink?.url}
+                                </Link>
+                            </div>}
+                            <div className="my-4 italic">
+                                {character.description}
+                            </div>
+
+                            <div className="flex flex-row items-stretch justify-evenly font-semibold text-xl my-2 bg-dogwood text-licorice-900 rounded-md">
+                                <div>STR: {character.stats.strength}</div>
+                                <div>STL: {character.stats.stealth}</div>
+                                <div>SKL: {character.stats.skill}</div>
+                                <div>CHR: {character.stats.charisma}</div>
+                            </div>
+
+                            <div className="my-2">
+                                <div className="text-2xl font-semibold">{character.specialAbility.name}</div>
+                                <div className="text-lg italic">{character.specialAbility.description}</div>
+                            </div>
+                            {character?.ownerId === user.id && <div>
+                                <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
+                                    Edit
+                                </Link>
+                            </div>}
                         </div>
-                        <div>
-                            {character.status}
-                        </div>
-                        <div>
-                            {character.pronouns}
-                        </div>
-                        <div>
-                            {character.crowns} 👑
-                        </div>
-                        <div>
-                            {character.strikes} ❌
-                        </div>
-                        <div>
-                            <div>Description:</div>
-                            <div>{character.description}</div>
-                        </div>
-                        <div>
-                            <div>Special Ability: {character.specialAbility.name}</div>
-                            <div>{character.specialAbility.description}</div>
-                        </div>
-                        <div>
-                            <div>Stats:</div>
-                            <div>Strength: {character.stats.strength}</div>
-                            <div>Stealth: {character.stats.stealth}</div>
-                            <div>Skill: {character.stats.skill}</div>
-                            <div>Charisma: {character.stats.charisma}</div>
-                        </div>
-                        {character?.ownerId === user.id && <div>
-                            <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
-                                Edit
-                            </Link>
-                        </div>}
                     </div>
 
                 ) : (

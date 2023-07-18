@@ -9,7 +9,7 @@ import Textarea from "~/components/textarea";
 import { getCharacterbyId, updateCharacter } from "~/utils/characters.server";
 import { CharacterWithMods, UserWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
-import { validateLength, validateStat } from "~/utils/validators";
+import { validateLength, validateStat, validateURL } from "~/utils/validators";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
     const { user } = await getUser(request)
@@ -25,6 +25,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const name = form.get("name") as string || ''
     const description = form.get("description") as string || ''
     const pronouns = form.get("pronouns") as string || ''
+    const url = form.get("link") as string || ''
     const specialAbilityName = form.get("specialAbilityName") as string || ''
     const specialAbilityDescription = form.get("specialAbilityDescription") as string || ''
     const strength = Number(form.get("strength"))
@@ -43,7 +44,8 @@ export const action: ActionFunction = async ({ request, params }) => {
         skill,
         stealth,
         charisma,
-        avatarUrl
+        avatarUrl,
+        link: url
     }
 
     const fieldErrors = {
@@ -52,6 +54,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         pronouns: validateLength(pronouns, 10, 1),
         specialAbilityName: validateLength(specialAbilityName, 20, 1),
         specialAbilityDescription: validateLength(specialAbilityDescription, 50, 1),
+        link: url ? (validateLength(url, 50, 5) || validateURL(url)) : undefined,
         charisma: validateStat(charisma),
         strength: validateStat(strength),
         skill: validateStat(skill),
@@ -84,7 +87,9 @@ export const action: ActionFunction = async ({ request, params }) => {
             skill,
             stealth
         },
-        avatarUrl
+        avatarUrl,
+        ...(url ? { profileLink: { url } } : { profileLink: { url: '' } })
+
     }, params?.characterId || '', request)
 
     if (character) return redirect(`/gm-realm/characters/${character.id}`)
@@ -112,6 +117,7 @@ export default function EditCharacter() {
         specialAbilityName: actionData?.fields?.specialAbilityName || character.specialAbility.name || '',
         specialAbilityDescription: actionData?.fields?.specialAbilityDescription || character.specialAbility.description || '',
         avatarUrl: actionData?.fields?.avatarUrl || character.avatarUrl || undefined,
+        link: actionData?.fields?.link || character?.profileLink?.url || ''
     })
 
     const [loading, setLoading] = useState(false)
@@ -189,6 +195,17 @@ export default function EditCharacter() {
                         })}
                         display="Description"
                         error={actionData?.fieldErrors?.description}
+                    />
+                    <InputField
+                        type="text"
+                        name="link"
+                        value={inputs.link}
+                        onChange={e => setInputs({
+                            ...inputs,
+                            link: e.target.value
+                        })}
+                        display="Profile Link"
+                        error={actionData?.fieldErrors?.link}
                     />
                     <div className="flex flex-row w-full">
                         <div className="mx-2">
