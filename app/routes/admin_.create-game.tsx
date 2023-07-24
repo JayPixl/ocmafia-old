@@ -49,9 +49,6 @@ export default function Admin() {
                 <Link to={'/admin/create-game'}>Back to Admin Home</Link>
             </div>
             <div className="flex flex-col items-center justify-center p-5 rounded-xl bg-licorice-600 w-2/3">
-                <div>
-                    {JSON.stringify(action?.newGame)}
-                </div>
                 <form method="POST">
                     <div className="text-red-600">
                         {action?.error}

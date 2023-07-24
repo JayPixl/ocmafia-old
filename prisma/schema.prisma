@@ -73,22 +73,23 @@ model Character {
 }
 
 model Game {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  id       String      @id @default(auto()) @map("_id") @db.ObjectId
   name     String
   location String
+  status   GameStatus?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
 
-  currentPhase            Phase?       @relation("CurrentPhase")
-  phases                  Phase[]      @relation("GamePhases")
-  currentDay              Int?         @default(1)
-  characterRoles          Role[]       @relation(references: [id], fields: [roleIds], "ActiveGameRoles")
-  roleIds                 String[]     @db.ObjectId
-  characterStatuses       GameStatus[]
-  hosts                   User[]       @relation("GameHosts")
-  participatingCharacters Character[]  @relation("CharacterParticipant")
-  participatingPlayers    User[]       @relation("PlayerParticipant")
+  currentPhase            Phase?                @relation("CurrentPhase")
+  phases                  Phase[]               @relation("GamePhases")
+  currentDay              Int?                  @default(1)
+  characterRoles          Role[]                @relation(references: [id], fields: [roleIds], "ActiveGameRoles")
+  roleIds                 String[]              @db.ObjectId
+  characterStatuses       GameCharacterStatus[]
+  hosts                   User[]                @relation("GameHosts")
+  participatingCharacters Character[]           @relation("CharacterParticipant")
+  participatingPlayers    User[]                @relation("PlayerParticipant")
 }
 
 model Phase {
@@ -180,7 +181,7 @@ enum Clearance {
   ADMIN
 }
 
-enum GameStatus {
+enum GameCharacterStatus {
   ALIVE
   WOUNDED
   DEAD
@@ -209,4 +210,10 @@ enum EventTypes {
   WOUND
   VOTING_SKIP
   RESURRECTION
+}
+
+enum GameStatus {
+  ENLISTING
+  ONGOING
+  COMPLETED
 }

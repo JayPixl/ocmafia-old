@@ -2,6 +2,7 @@ import { AvatarColors, AvatarTypes, Character, User } from "@prisma/client";
 import UserCircle from "./user-circle";
 import { useParams } from "@remix-run/react";
 import { Link } from "react-router-dom";
+import CharacterAvatar from "./character-avatar";
 
 interface props {
     loggedIn: User | undefined
@@ -44,28 +45,35 @@ export default function UserProfile({ loggedIn, owner, profileData }: props) {
                         {profileData.characters?.length > 0 ? profileData.characters.map(character => (
                             <Link to={`/gm-realm/characters/${character.id}`} key={character.id}>
                                 <div
-                                    className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative"
-                                    style={character.avatarUrl ? { backgroundImage: character.avatarUrl } : undefined}
+                                    className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative hover:opacity-80"
+                                    style={character.gallery.length > 0 ? { backgroundImage: `url(${character.gallery[0]})` } : undefined}
                                 >
-                                    <div className="absolute bottom-1 left-1">
-                                        {character.displayName || character.name}
+                                    <div className="absolute top-1 right-1 flex flex-row text-sm">
+                                        {character.crowns} 👑 {character.strikes} ❌
+                                    </div>
+
+                                    <div className="absolute bottom-1 left-1 flex flex-row justify-center items-end">
+                                        <CharacterAvatar
+                                            avatarUrl={character?.avatarUrl || undefined}
+                                            size="SMALL"
+                                        />
+                                        <div className="ml-2 font-semibold">{character.displayName || character.name}</div>
                                     </div>
                                 </div>
                             </Link>
-                        )) : owner ? (
+                        )) : !owner && <div
+                            className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative flex justify-center items-center"
+                        >
+                            No characters yet!
+                        </div>}
+                        {owner && (
                             <Link to={`/gm-realm/characters/create`}>
                                 <div
-                                    className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative flex justify-center items-center"
+                                    className="bg-licorice-600 h-28 w-28 rounded-md m-2 relative flex justify-center items-center font-bold text-3xl hover:opacity-80"
                                 >
-                                    Create a Character!
+                                    +
                                 </div>
                             </Link>
-                        ) : (
-                            <div
-                                className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative flex justify-center items-center"
-                            >
-                                No characters yet!
-                            </div>
                         )
                         }
                     </div>

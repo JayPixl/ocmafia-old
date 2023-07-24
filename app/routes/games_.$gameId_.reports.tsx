@@ -28,22 +28,24 @@ export default function Games() {
                 { name: "Reports", url: `/games/${params?.gameId}/reports`, id: 'reports' || '', parent: params?.gameId }
             ]}
         >
-            <div>
-                <div><h2 className="text-3xl font-bold">{game?.name} Reports</h2></div>
+            <div className="p-8 flex flex-col">
+                <Link to={`/games/${params?.gameId}`}><div className="">← Back to {game?.name}</div></Link>
+                <div><h2 className="text-3xl font-bold py-5">Reports</h2></div>
 
-                {game?.phases?.map((phase: PhaseWithMods) => (
-                    <>
-                        <div><h3 className="text-xl font-semibold">{`${phase.time} ${phase.dayNumber} Report`}</h3></div>
-                        {phase?.events?.map(event => <div className="text-lg">
-                            <div>{event.message}</div>
-                            <div>{event?.clues.map(clue => <div className="text-sm">
-                                {clue}
-                            </div>)}
-                            </div>
+                {game?.phases?.map((phase: PhaseWithMods) => (phase?.events?.length !== 0) ? <>
+                    <div><h3 className="text-xl font-semibold">{`${phase.time} ${phase.dayNumber} Report`}</h3></div>
+                    {phase?.events?.map(event => <div className="text-lg">
+                        <div>{event.message}</div>
+                        <div>{event?.clues.map(clue => <div className="text-sm">
+                            {clue}
                         </div>)}
-                    </>
-                )) || <>
-                        <div>No Reports yet!</div>
+                        </div>
+                    </div>)}
+                </> : <>
+                    <div><h3 className="text-xl font-semibold">{`No Reports Yet!`}</h3></div>
+                </>
+                ) || <>
+                        <div>No Reports Yet!</div>
                     </>}
 
                 {authorized && (

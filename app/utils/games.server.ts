@@ -71,10 +71,20 @@ export const getGameById: (
             },
             currentPhase: true,
             participatingCharacters: {
-                include: {
-                    owner: true
+                select: {
+                    id: true,
+                    name: true,
+                    avatarUrl: true,
+                    ownerId: true,
+                    owner: {
+                        select: {
+                            username: true,
+                            id: true,
+                            characters: true
+                        }
+                    }
                 }
-            }
+            },
         }
     })
 
@@ -306,6 +316,9 @@ export const manageCharacters: (
                     connect: {
                         id: owner.id
                     }
+                },
+                characterStatuses: {
+                    push: 'ALIVE'
                 }
             }
         })

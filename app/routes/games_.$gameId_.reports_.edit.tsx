@@ -197,7 +197,6 @@ export default function Games() {
                             No Events Yet!
                         </div>}
                 </div>
-                {JSON.stringify(inputs)}
             </div>
         </Layout>
     )

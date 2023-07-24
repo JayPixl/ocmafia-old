@@ -37,7 +37,7 @@ export default function Character() {
                             <div className="flex w-full items-end justify-start border-b-2 border-licorice-800 pb-2">
                                 <CharacterAvatar
                                     avatarUrl={character.avatarUrl}
-                                    size="LARGE"
+                                    size="XLARGE"
                                 />
                                 <div className="flex flex-col justify-between">
                                     {character.status === 'ACTIVE' ? <h1 className="text-4xl font-semibold mx-4">
@@ -72,7 +72,7 @@ export default function Character() {
                                 <div className="text-2xl font-semibold">{character.specialAbility.name}</div>
                                 <div className="text-lg italic">{character.specialAbility.description}</div>
                             </div>
-                            {character?.ownerId === user.id && <div>
+                            {character?.ownerId === user?.id && <div>
                                 <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
                                     Edit
                                 </Link>

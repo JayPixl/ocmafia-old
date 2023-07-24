@@ -24,3 +24,9 @@ export const gradientMap: {
             styles: 'bg-gradient-to-br from-green-400 to-green-600'
         }
     ]
+
+export const GameCharacterStatusEmojis: any = {
+    ALIVE: '💚',
+    WOUNDED: '🩹',
+    DEAD: '💀'
+}
