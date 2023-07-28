@@ -6,12 +6,13 @@ import InputField from "~/components/input-field";
 import Layout from "~/components/layout";
 import Textarea from "~/components/textarea";
 import { createCharacter } from "~/utils/characters.server";
+import { prisma } from "~/utils/prisma.server";
 import { getUser } from "~/utils/users.server";
 import { validateLength, validateStat } from "~/utils/validators";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const { user } = await getUser(request)
-    if (!user) return redirect("/gm-realm/characters")
+    if (!user || ((await prisma.user.findUnique({ where: { id: user?.id }, select: { _count: { select: { characters: true } } } }))?._count.characters || 10) >= (user?.characterLimit || 0)) return redirect("/gm-realm/characters")
 
     return json({ user })
 }
@@ -110,17 +111,17 @@ export default function CreateCharacter() {
 
     const handleImageChange = async (file: File) => {
         const formData = new FormData()
-        formData.append("avatar", file)
+        formData.append("image", file)
 
         setLoading(l => true)
 
-        const result = await fetch('/upload-image?type=avatar', {
+        const result = await fetch('/upload-image', {
             method: "POST",
             body: formData
         })
 
-        const { avatarUrl, error }: { avatarUrl?: string, error?: string } = await result.json()
-        setInputs({ ...inputs, avatarUrl })
+        const { image, error }: { image?: string, error?: string } = await result.json()
+        setInputs({ ...inputs, avatarUrl: image })
         setLoading(l => false)
     }
 

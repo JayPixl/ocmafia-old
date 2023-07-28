@@ -6,7 +6,8 @@ import { AvatarColors, AvatarTypes, User } from '@prisma/client'
 export const getProfileData: (request: Request, params: Params) => Promise<{
     user?: User,
     owner: boolean,
-    profileData?: any
+    profileData?: any,
+    following?: boolean,
 }> = async (request: Request, params: Params) => {
     let { user } = await getUser(request)
 
@@ -18,14 +19,40 @@ export const getProfileData: (request: Request, params: Params) => Promise<{
             }
         },
         include: {
-            characters: true
+            characters: true,
+            followedBy: {
+                select: {
+                    username: true,
+                    id: true,
+                    slug: true,
+                    avatar: true
+                }
+            },
+            following: {
+                select: {
+                    username: true,
+                    id: true,
+                    slug: true,
+                    avatar: true
+                }
+            }
+        }
+    }))
+
+    const following = (await prisma.user.findMany({
+        where: {
+            id: data?.id,
+            followedByIDs: {
+                hasSome: user?.id
+            }
         }
     }))
 
     return {
         user,
         owner: data?.username === user?.username,
-        profileData: data
+        profileData: data,
+        following: following.length !== 0
     }
 }
 
@@ -35,9 +62,10 @@ export const updateUserProfile: (
         avatarType?: AvatarTypes,
         avatarColor?: AvatarColors,
         avatarUrl?: string
-    }) => Promise<{
+    },
+    tagline?: string) => Promise<{
         error?: string
-    }> = async (request, avatar) => {
+    }> = async (request, avatar, tagline) => {
         const { user } = await getUser(request)
         if (!user) return { error: "Could not find user in database" }
 
@@ -46,7 +74,8 @@ export const updateUserProfile: (
                 id: user.id
             },
             data: {
-                avatar: avatar
+                avatar,
+                tagline
             }
         })
 
@@ -54,3 +83,37 @@ export const updateUserProfile: (
 
         return { error: undefined }
     }
+
+export const followUser: (
+    request: Request,
+    followedId: string,
+    action: 'follow' | 'unfollow'
+) => Promise<{
+    error?: string
+}> = async (request, followedId, action) => {
+    const { user } = await getUser(request)
+    if (!user) return {
+        error: "Could not find user!"
+    }
+    const query = { ...(action === 'follow' ? { connect: { id: user.id } } : { disconnect: { id: user.id } }) }
+
+    const followedUser = await prisma.user.findFirst({ where: { username: { equals: followedId, mode: 'insensitive' } } })
+    if (!followedUser) return {
+        error: "Could not find followed user!"
+    }
+
+    const data = await prisma.user.update({
+        where: {
+            id: followedUser.id
+        },
+        data: {
+            followedBy: {
+                ...query
+            }
+        }
+    })
+    if (!data) return {
+        error: "We ran into an issue when trying to follow this player..."
+    }
+    return {}
+}

@@ -86,7 +86,8 @@ export const updateCharacter: (
             strength: number,
             stealth: number
         },
-        avatarUrl?: string
+        avatarUrl?: string,
+        featuredImageUrl?: string
     },
     characterId: string,
     request: Request

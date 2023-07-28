@@ -33,6 +33,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const skill = Number(form.get("skill"))
     const charisma = Number(form.get("charisma"))
     const avatarUrl = form.get("avatarUrl") as string || undefined
+    const featuredImageUrl = form.get("featuredImageUrl") as string || undefined
 
     const fields = {
         name,
@@ -45,7 +46,8 @@ export const action: ActionFunction = async ({ request, params }) => {
         stealth,
         charisma,
         avatarUrl,
-        link: url
+        link: url,
+        featuredImageUrl
     }
 
     const fieldErrors = {
@@ -88,7 +90,8 @@ export const action: ActionFunction = async ({ request, params }) => {
             stealth
         },
         avatarUrl,
-        ...(url ? { profileLink: { url } } : { profileLink: { url: '' } })
+        ...(url ? { profileLink: { url } } : { profileLink: { url: '' } }),
+        featuredImageUrl
 
     }, params?.characterId || '', request)
 
@@ -117,24 +120,26 @@ export default function EditCharacter() {
         specialAbilityName: actionData?.fields?.specialAbilityName || character.specialAbility.name || '',
         specialAbilityDescription: actionData?.fields?.specialAbilityDescription || character.specialAbility.description || '',
         avatarUrl: actionData?.fields?.avatarUrl || character.avatarUrl || undefined,
-        link: actionData?.fields?.link || character?.profileLink?.url || ''
+        link: actionData?.fields?.link || character?.profileLink?.url || '',
+        featuredImageUrl: actionData?.fields?.featuredImageUrl || character?.featuredImageUrl || '',
     })
 
     const [loading, setLoading] = useState(false)
 
-    const handleImageChange = async (file: File) => {
+    const handleImageChange = async (file: File, name: 'avatarUrl' | 'featuredImageUrl') => {
         const formData = new FormData()
-        formData.append("avatar", file)
-
+        formData.append('image', file)
+        console.log(file.name, name)
         setLoading(l => true)
 
-        const result = await fetch('/upload-image?type=avatar', {
+        const result = await fetch('/upload-image', {
             method: "POST",
             body: formData
         })
 
-        const { avatarUrl, error }: { avatarUrl?: string, error?: string } = await result.json()
-        setInputs({ ...inputs, avatarUrl })
+        const { image, error }: { image?: string, error?: string } = await result.json()
+        console.log(image, error)
+        setInputs({ ...inputs, [name]: image })
         setLoading(l => false)
     }
 
@@ -147,13 +152,18 @@ export default function EditCharacter() {
                         name="avatarUrl"
                         value={inputs.avatarUrl}
                     />}
+                    {inputs.featuredImageUrl && <input
+                        type="hidden"
+                        name="featuredImageUrl"
+                        value={inputs.featuredImageUrl}
+                    />}
                     <div className="text-3xl self-center p-2">
                         Edit Character
                     </div>
 
                     <div className="w-full flex justify-center">
                         <ImageUploader
-                            onChange={handleImageChange}
+                            onChange={(val) => handleImageChange(val, 'avatarUrl')}
                             imageUrl={inputs.avatarUrl}
                             loading={loading}
                             type="circle"
@@ -207,6 +217,20 @@ export default function EditCharacter() {
                         display="Profile Link"
                         error={actionData?.fieldErrors?.link}
                     />
+
+                    <div className="w-full flex flex-col justify-center items-center">
+                        <div className="text-xl md:text-2xl mb-1">
+                            Featured Image
+                        </div>
+                        <ImageUploader
+                            onChange={(val) => handleImageChange(val, 'featuredImageUrl')}
+                            imageUrl={inputs.featuredImageUrl}
+                            loading={loading}
+                            type="medium square"
+                            maxSize={3}
+                        />
+                    </div>
+
                     <div className="flex flex-row w-full">
                         <div className="mx-2">
                             <InputField

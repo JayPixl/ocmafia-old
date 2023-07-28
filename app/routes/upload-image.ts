@@ -2,24 +2,16 @@ import { ActionFunction, UploadHandler, UploadHandlerPart, json, unstable_parseM
 import { uploadImage } from "~/utils/cloudinary.server";
 
 export const action: ActionFunction = async ({ request }) => {
-    const type = new URL(request.url).searchParams.get("type")
+    const uploadHandler: UploadHandler = async ({ name, filename, contentType, data }: UploadHandlerPart) => {
+        if (name !== 'image') return undefined
+        console.log(filename, contentType)
 
-    if (type === 'avatar') {
-        const uploadHandler: UploadHandler = async ({ name, filename, contentType, data }: UploadHandlerPart) => {
-            if (name !== 'avatar') return undefined
-            console.log(filename, contentType)
-
-            const { result } = await uploadImage(data)
-            return result?.secure_url
-        }
-        const formData = await unstable_parseMultipartFormData(request, uploadHandler)
-        const img = formData.get("avatar")
-
-        if (!img) return json({ error: "Error while uploading image..." })
-        return json({ avatarUrl: img })
+        const { result } = await uploadImage(data)
+        return result?.secure_url
     }
+    const formData = await unstable_parseMultipartFormData(request, uploadHandler)
+    const img = formData.get("image")
 
-    return json({
-        error: "Invalid query"
-    })
+    if (!img) return json({ error: "Error while uploading image..." })
+    return json({ image: img })
 }

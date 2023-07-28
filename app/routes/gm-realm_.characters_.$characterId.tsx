@@ -61,6 +61,14 @@ export default function Character() {
                                 {character.description}
                             </div>
 
+                            {character?.featuredImageUrl && <div
+                                style={{
+                                    backgroundSize: "cover",
+                                    backgroundImage: `url(${character.featuredImageUrl})`
+                                }}
+                                className="w-full h-48 bg-center my-4"
+                            ></div>}
+
                             <div className="flex flex-row items-stretch justify-evenly font-semibold text-xl my-2 bg-dogwood text-licorice-900 rounded-md">
                                 <div>STR: {character.stats.strength}</div>
                                 <div>STL: {character.stats.stealth}</div>

@@ -2,14 +2,14 @@ import { AvatarColors, AvatarTypes } from "@prisma/client"
 import { gradientMap } from "~/utils/constants"
 
 interface props {
-    avatarType: AvatarTypes
+    avatarType?: AvatarTypes
     avatarColor?: AvatarColors
     avatarUrl?: string
     username: string
-    size?: string
+    size?: 'SMALL' | 'LARGE' | 'XLARGE'
 }
 
-export default function UserCircle({ avatarType, avatarColor, avatarUrl, username, size = 'SMALL' }: props) {
+export default function UserCircle({ avatarType = 'COLOR', avatarColor, avatarUrl, username, size = 'SMALL' }: props) {
     return (
         <>
             {avatarType === "COLOR" ? (

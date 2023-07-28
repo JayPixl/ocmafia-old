@@ -1,6 +1,6 @@
 import { EventTypes, Game, Prisma, Time } from "@prisma/client"
 import { prisma } from "./prisma.server"
-import { getUser, requireClearance } from "./users.server"
+import { requireClearance } from "./users.server"
 import { GameWithMods } from "./types"
 
 export const createGame: (form: {
@@ -19,6 +19,17 @@ export const createGame: (form: {
                     time: 'DAY',
                     dayNumber: 1,
                 }
+            },
+            gameMessages: {
+                create: {
+                    messages: [
+                        { event: 'KILL', message: '@@ has died!' },
+                        { event: 'RESURRECTION', message: '@@ has come back to life!' },
+                        { event: 'WOUND', message: '@@ has been wounded!' },
+                        { event: 'VOTING_EXECUTION', message: '@@ has been executed!' },
+                        { event: 'VOTING_SKIP', message: 'The voting phase has been skipped for the day!' }
+                    ]
+                }
             }
         },
         include: {
@@ -26,7 +37,8 @@ export const createGame: (form: {
                 select: {
                     id: true
                 }
-            }
+            },
+            gameMessages: true
         }
     })
 

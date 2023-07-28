@@ -32,7 +32,7 @@ const storage = createCookieSessionStorage({
         maxAge: 60 * 60 * 24 * 30,
         httpOnly: true,
     }
-});
+})
 
 export const login: (form: LoginForm) => Promise<{
     error: any,
@@ -94,7 +94,8 @@ export const createUser: (form: SignupForm) => Promise<any> = async (form: Signu
                 create: {
 
                 }
-            }
+            },
+            characterLimit: 1
         }
     })
 }

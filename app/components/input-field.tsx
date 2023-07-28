@@ -7,8 +7,9 @@ interface props {
     value: string,
     display: string
     error?: string | null
+    maxLength?: number
 }
-export default function InputField({ name, onChange, type, value, display, error }: props) {
+export default function InputField({ name, onChange, type, value, display, error, maxLength = 9999 }: props) {
     return <div className="py-2">
         <div>
             <label htmlFor={name} className="text-xl md:text-2xl">
@@ -22,6 +23,7 @@ export default function InputField({ name, onChange, type, value, display, error
                 name={name}
                 onChange={onChange}
                 value={value}
+                maxLength={maxLength}
             />
         </div>
         <div className="text-red-400">

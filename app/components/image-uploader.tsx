@@ -46,8 +46,8 @@ export const ImageUploader = ({ onChange, imageUrl, loading, type, maxSize = 2 }
             <div ref={dropRef}
                 className={`${draggingOver ? 'border-4 border-dashed border-bittersweet border-rounded' : ''} group relative 
                     ${type === 'circle' ? 'rounded-full w-16 h-16' : ''} 
-                    ${type === 'medium square' ? 'rounded-xl w-72 h-36' : ''}
-                    flex justify-center items-center bg-gray-400 transition duration-300 ease-in-out hover:bg-gray-500 cursor-pointer`}
+                    ${type === 'medium square' ? 'rounded-xl w-52 h-28' : ''}
+                    flex justify-center items-center bg-gray-400 transition duration-300 ease-in-out hover:bg-gray-500 cursor-pointer overflow-hidden bg-center`}
                 style={{
                     backgroundSize: "cover",
                     ...(imageUrl ? { backgroundImage: `url(${imageUrl})` } : { backgroundImage: `url(/images/blank-pfp.png)` }),
@@ -62,7 +62,7 @@ export const ImageUploader = ({ onChange, imageUrl, loading, type, maxSize = 2 }
                 onClick={() => fileInputRef.current?.click()}
             >
                 {
-                    <div className="absolute w-full h-full bg-blue-400 opacity-50 rounded-full transition duration-300 ease-in-out group-hover:opacity-0" />
+                    <div className={`absolute w-full h-full bg-blue-400 opacity-50 transition duration-300 ease-in-out group-hover:opacity-0`} />
                 }
                 {!loading ?
                     <p className="font-extrabold text-4xl text-gray-200 cursor-pointer select-none transition duration-300 ease-in-out group-hover:opacity-0 pointer-events-none z-10">+</p>
