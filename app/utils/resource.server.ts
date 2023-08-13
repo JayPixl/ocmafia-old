@@ -134,3 +134,42 @@ export const getFilteredGameData: (
         results
     }
 }
+
+export const getFilteredRoleData: (
+    filters: {
+        name?: string,
+        id?: string
+    },
+    select: Prisma.RoleSelect,
+    take?: number,
+) => Promise<{
+    results?: any[],
+    error?: string
+}> = async (filters, select, take = 10) => {
+    if (!filters.id && !filters.name) return {
+        error: "No filters added"
+    }
+    let where: Prisma.RoleWhereInput = { ...filters };
+    if (filters?.name) {
+        where = {
+            ...filters,
+            name: {
+                contains: filters.name,
+                mode: "insensitive"
+            }
+        }
+    }
+
+    const results = await prisma.role.findMany({
+        take,
+        where,
+        select
+    })
+
+    if (!results) return {
+        error: "Could not retrieve role data"
+    }
+    return {
+        results
+    }
+}

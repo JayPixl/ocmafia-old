@@ -1,22 +1,59 @@
 import { User } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useActionData, useFetcher, useLoaderData, useNavigate, useParams } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import InputField from "~/components/input-field";
 import { Modal } from "~/components/modal";
-import SelectBox from "~/components/select-box";
-import { editGame, getGameById, manageCharacters, manageHosts, requireHost } from "~/utils/games.server";
-import { GameWithMods } from "~/utils/types";
+import { getGameById, manageCharacters, requireHost } from "~/utils/games.server";
+import { prisma } from "~/utils/prisma.server";
+import { CharacterWithMods, GameWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
     const { user } = await getUser(request)
     const { game } = await getGameById(params.gameId || '')
-    if (!game) return redirect('/games')
+    if (!game || game.status !== 'ENLISTING') return redirect('/games')
 
     const { authorized, admin } = await requireHost(request, game.id)
     if (!authorized) return redirect(`/games/${params.gameId}`)
-    return json({ user, game, admin })
+
+    const joinRequests = await prisma.character.findMany({
+        where: {
+            id: {
+                in: game.joinRequestIds
+            }
+        },
+        select: {
+            name: true,
+            avatarUrl: true,
+            id: true,
+            owner: {
+                select: {
+                    username: true
+                }
+            }
+        }
+    })
+
+    const pendingInvites = await prisma.character.findMany({
+        where: {
+            id: {
+                in: game.pendingInviteIds
+            }
+        },
+        select: {
+            name: true,
+            avatarUrl: true,
+            id: true,
+            owner: {
+                select: {
+                    username: true
+                }
+            }
+        }
+    })
+
+    return json({ user, game, admin, joinRequests, pendingInvites })
 }
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -24,13 +61,14 @@ export const action: ActionFunction = async ({ request, params }) => {
     const method = form.get('method') as string
     const id = form.get('_action') as string || form.get('characterSelect') as string
 
-    const { error, newGame } = await manageCharacters({ characterId: id, gameId: params.gameId || '', action: method }, request)
+    const { error, newGame } = await manageCharacters({ characterId: id, gameId: params.gameId || '', action: method })
     if (error) return json({ error })
-    return redirect(`/games/${params.gameId}/edit`)
+
+    return null
 }
 
 export default function EditGameCharacters() {
-    const { user, game, admin }: { user?: User, game?: GameWithMods, admin?: boolean } = useLoaderData()
+    const { user, game, admin, joinRequests, pendingInvites }: { user?: User, game?: GameWithMods, admin?: boolean, joinRequests?: CharacterWithMods[], pendingInvites?: CharacterWithMods[] } = useLoaderData()
     const action = useActionData()
     const fetcher = useFetcher()
 
@@ -98,7 +136,7 @@ export default function EditGameCharacters() {
                             <button
                                 type="submit"
                             >
-                                Add
+                                Send Invite
                             </button>
                         )}
                     </div>
@@ -128,5 +166,42 @@ export default function EditGameCharacters() {
                 ))
             }
         </form>
+        {joinRequests?.length !== 0 ? <form method="POST">
+            <div className="my-3 text-xl">
+                Pending Join Requests
+            </div>
+            <input
+                type="hidden"
+                name="method"
+                value='add'
+            />
+            {joinRequests?.map(char => <div className="flex flex-row">
+                <div>{char.name} {char?.owner?.username}</div>
+                <input
+                    type="hidden"
+                    name="characterSelect"
+                    value={char.id}
+                />
+                <button
+                    type="submit"
+                >
+                    Add
+                </button>
+            </div>)}
+        </form> : ''}
+
+        {pendingInvites?.length !== 0 ? <form method="POST">
+            <div className="my-3 text-xl">
+                Pending Invites
+            </div>
+            <input
+                type="hidden"
+                name="method"
+                value='add'
+            />
+            {pendingInvites?.map(char => <div className="flex flex-row">
+                <div>{char.name} {char?.owner?.username}</div>
+            </div>)}
+        </form> : ''}
     </Modal>
 }

@@ -1,10 +1,10 @@
+import GameMessage from "~/components/game-message";
 
-import FormattedText from "~/components/formatted-text"
 
 export default function Test() {
     return <div>
-        <FormattedText>
-            Hello test  hello @jaypixl7
-        </FormattedText>
+        <GameMessage actor={{ name: "Shadowdancer", id: '64a7490c4ca8def98475dea9' }}>
+            @@ has been killed!
+        </GameMessage>
     </div>
 }

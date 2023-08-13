@@ -1,6 +1,7 @@
 import { Game, Phase, User } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
+import GameMessage from "~/components/game-message";
 import Layout from "~/components/layout";
 import { getGameById, requireHost } from "~/utils/games.server";
 import { PhaseWithMods } from "~/utils/types";
@@ -15,7 +16,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return json({ user, game, authorized })
 }
 
-export default function Games() {
+export default function Reports() {
     const { user, game, authorized } = useLoaderData()
     const params = useParams()
     return (
@@ -30,26 +31,35 @@ export default function Games() {
         >
             <div className="p-8 flex flex-col">
                 <Link to={`/games/${params?.gameId}`}><div className="">← Back to {game?.name}</div></Link>
-                <div><h2 className="text-3xl font-bold py-5">Reports</h2></div>
+                <div><h2 className="text-3xl font-bold py-5">All Reports</h2></div>
 
-                {game?.phases?.map((phase: PhaseWithMods) => (phase?.events?.length !== 0) ? <>
-                    <div><h3 className="text-xl font-semibold">{`${phase.time} ${phase.dayNumber} Report`}</h3></div>
-                    {phase?.events?.map(event => <div className="text-lg">
-                        <div>{event.message}</div>
-                        <div>{event?.clues.map(clue => <div className="text-sm">
-                            {clue}
+                <div className="w-full flex flex-col bg-dogwood text-licorice-800 rounded-lg p-5">
+                    {game?.phases?.map((phase: PhaseWithMods) => (phase?.events?.filter(events => events.draft === false)?.length !== 0) ? <Link to={`/games/${params.gameId}/reports/${phase.id}`} key={phase.id} className="group py-2">
+                        <div><h3 className="text-xl font-semibold underline group-hover:no-underline">{`${phase.time} ${phase.dayNumber} Report 🔎`}</h3></div>
+                        {phase?.events?.filter(event => event.draft === false)?.map(event => <div className="text-lg" key={event.id}>
+                            <div className="ml-2">
+                                <GameMessage
+                                    actor={event.actor ? { name: event?.actor?.name || '', id: event.actorId || '' } : undefined}
+                                    target={event.target ? { name: event?.target?.name || '', id: event.targetId || '' } : undefined}
+                                >
+                                    {event.message}
+                                </GameMessage>
+                                <div className="ml-2">
+                                    {event?.clues.map(clue => <div className="text-sm italic" key={clue}>
+                                        {clue}
+                                    </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>)}
-                        </div>
-                    </div>)}
-                </> : <>
-                    <div><h3 className="text-xl font-semibold">{`No Reports Yet!`}</h3></div>
-                </>
-                ) || <>
-                        <div>No Reports Yet!</div>
-                    </>}
+                    </Link> : ''
+                    )}
+                    {game?.phases?.filter((phase: PhaseWithMods) => phase.events?.filter(event => event.draft === false).length !== 0).length !== 0 ? '' : <div className='text-xl font-semibold'>No Reports Yet!</div>}
+
+                </div>
 
                 {authorized && (
-                    <div>
+                    <div className="mt-8 underline">
                         <Link to={`/games/${params.gameId}/reports/edit`}>
                             Edit Reports
                         </Link>

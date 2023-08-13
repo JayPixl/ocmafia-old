@@ -1,12 +1,14 @@
-import { Game, User } from "@prisma/client";
+import { Alignment, Game, Role, User } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
+import { v4 } from "uuid";
 import CharacterAvatar from "~/components/character-avatar";
 import Layout from "~/components/layout";
-import { GameCharacterStatusEmojis } from "~/utils/constants";
+import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constants";
 import { getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
-import { CharacterWithMods, EventWithMods, PhaseWithMods } from "~/utils/types";
+import { getMyCharacterGameProfile } from "~/utils/roles.server";
+import { CharacterWithMods, CharacterWithRole, EventWithMods, GameWithMods, PhaseWithMods, UserWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -15,13 +17,31 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const { game } = await getGameById(params.gameId || '')
     if (!game) return redirect('/games')
 
-    let recentReport = (await prisma.phase.findMany({ where: { gameId: game.id, events: { some: { draft: false } } }, include: { events: true }, take: 1 }))[0]
+    const currentPhase = (game.currentPhaseId ? await prisma.phase.findFirst({
+        where: {
+            id: game.currentPhaseId
+        },
+        include: {
+            characterStatus: true,
+            events: true
+        }
+    }) : undefined)
 
-    return json({ user, game, authorized, recentReport })
+    const roles = (await prisma.role.findMany({
+        select: {
+            id: true,
+            name: true,
+            alignment: true
+        }
+    })) as Role[]
+
+    const { character, myRole } = user?.id ? await getMyCharacterGameProfile(user.id, game.id) : { character: undefined, myRole: undefined }
+
+    return json({ user, game, authorized, currentPhase, roles, registeredCharacter: character, myRole })
 }
 
 export default function Games() {
-    const { user, game, authorized, recentReport } = useLoaderData()
+    const { user, game, authorized, currentPhase, roles, registeredCharacter, myRole }: { user?: UserWithMods, game?: GameWithMods, authorized?: boolean, currentPhase?: PhaseWithMods, roles?: { id: string, name: string, alignment: Alignment }[], registeredCharacter?: CharacterWithRole, myRole?: Role } = useLoaderData()
     const params = useParams()
     return (
         <Layout
@@ -29,61 +49,121 @@ export default function Games() {
             navigation={true}
             navArray={[
                 { name: 'Games', url: `/games`, id: 'games' },
-                { name: game?.name, url: `/games/${params?.gameId}`, id: params?.gameId || '', parent: 'games' }
+                { name: game?.name || '', url: `/games/${params?.gameId}`, id: params?.gameId || '', parent: 'games' }
             ]}
         >
             <div className="p-8 md:p-12">
-                <div className="flex flex-col md:flex-row items-baseline">
-                    <h2 className="text-3xl font-bold">{game?.name}</h2>
-                    <div className="mx-3 hidden md:block">-</div>
-                    <div className="text-xl">({game?.status})</div>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+
+                    <div>
+                        <div className="flex flex-col lg:flex-row items-baseline">
+                            <h2 className="text-3xl font-bold">{game?.name}</h2>
+                            <div className="mx-3 hidden lg:block">-</div>
+                            <div className="text-xl">({game?.status})</div>
+                        </div>
+
+                        <div className="italic text-lg mb-3">{game?.location}</div>
+                    </div>
+                    {registeredCharacter ? <Link
+                        to={`/games/${game?.id}/dashboard`}
+                        className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 mb-5 hover:bg-transparent hover:text-bittersweet transition"
+                    >
+                        Go to Dashboard →
+                    </Link> : <Link
+                        to={`/games/${game?.id}/join`}
+                        className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 mb-5 hover:bg-transparent hover:text-bittersweet transition"
+                    >
+                        Join Game
+                    </Link>}
+                </div>
+                <div className={
+                    `w-full flex flex-col sm:flex-row 
+                    ${(!currentPhase || currentPhase.time === 'NIGHT') ?
+                        'bg-dogwood text-licorice-800' :
+                        'bg-licorice-900 text-dogwood'
+                    }
+                    rounded-lg p-5 relative`
+                }>
+
+                    <div className="text-3xl absolute top-5 right-5">
+                        {(game?.status === 'ENLISTING' || currentPhase?.time === 'NIGHT') ?
+                            '🌤️' :
+                            '🌙'}
+                    </div>
+
+                    <div className="w-full flex-grow-[2]">
+
+                        <div className="text-xl font-bold mb-3">{game?.status === 'ENLISTING' ? 'Recruits:' : 'Current Status:'}</div>
+                        {game?.participatingCharacters?.length !== 0 ? game?.participatingCharacters?.map((char: CharacterWithMods) => <Link to={char.id === registeredCharacter?.id ? `/gm-realm/${params.gameId}/dashboard` : `/gm-realm/characters/${char.id}`} className={`flex flex-row items-center py-3 ${char.id === registeredCharacter?.id ? "hover:shadow-xl hover:opacity-80" : ''}`} key={char.id}>
+
+                            <CharacterAvatar
+                                avatarUrl={char.avatarUrl || undefined}
+                                size={char.id === registeredCharacter?.id ? 'MEDIUM' : 'SMALL'}
+                            />
+
+                            <div className={`mx-4 flex flex-col text-lg font-semibold overflow-x-clip max-w-[50%]`}>
+                                <div>{char.name} {char.id === registeredCharacter?.id ? " - (YOU)" : ''}</div>
+                                {char.id === registeredCharacter?.id && myRole?.name && myRole?.alignment ? <div>
+                                    {RoleAlignmentEmojis[myRole.alignment]} {myRole.name} {RoleAlignmentEmojis[myRole.alignment]}
+                                </div> : ''}
+                            </div>
+
+                            <div className={char.id === registeredCharacter?.id ? 'text-2xl' : ''}>
+                                {currentPhase ? GameCharacterStatusEmojis?.[currentPhase?.characterStatus?.status?.filter(status => status.characterId === char.id)[0].status || 'ALIVE'] : GameCharacterStatusEmojis?.['ALIVE']}
+                            </div>
+
+                        </Link>) : <div>
+                            No Characters Yet!
+                        </div>}
+                    </div>
+
+                    {((game?.activeRoleIds.length === game?.playerCount) && roles) ? <div className="sm:w-2/3 border-t-2 border-t-licorice-600 sm:border-t-0 pt-5 sm:pt-0 sm:border-l-2 sm:border-l-licorice-600 sm:pl-5 flex-grow-[1]">
+                        <div className="text-xl font-bold mb-3">Active Roles:</div>
+                        {game?.activeRoleIds?.map((roleId: string) => <Link to={`/gm-realm/roles/${roleId}`} className="flex flex-row items-center py-3" key={v4()}>
+
+                            <div>
+                                {RoleAlignmentEmojis[roles?.filter(role => role.id === roleId)[0].alignment]}
+                            </div>
+
+                            <div className="mx-4 font-bold text-lg">
+                                {roles?.filter(role => role.id === roleId)[0].name}
+                            </div>
+
+                            <div>
+                                {RoleAlignmentEmojis[roles?.filter(role => role.id === roleId)[0].alignment]}
+                            </div>
+
+                        </Link>)}
+                    </div> : ''}
+
                 </div>
 
-                <div className="italic text-lg mb-3">{game?.location}</div>
-
-                <div className="w-full flex flex-col bg-dogwood text-licorice-800 rounded-lg p-5">
-                    <div className="text-xl font-bold mb-3">Current Status:</div>
-                    {game?.participatingCharacters.length > 0 ? game?.participatingCharacters?.map((char: CharacterWithMods, index: number) => <Link to={`/gm-realm/characters/${char.id}`} className="flex flex-row items-center" key={char.id}>
-                        <CharacterAvatar
-                            avatarUrl={char.avatarUrl || undefined}
-                            size='SMALL'
-                        />
-                        <div className="mx-4 font-bold text-lg">
-                            {char.name}
-                        </div>
-                        <div>
-                            {GameCharacterStatusEmojis[game?.characterStatuses[index]]}
-                        </div>
-                    </Link>) : <div>
-                        No Characters Yet!
-                    </div>}
-                </div>
-
-                <div className="flex flex-col my-5">
-                    {recentReport ? <>
-                        <div><h3 className="text-xl font-semibold">{`${recentReport.time} ${recentReport.dayNumber} Report`}</h3></div>
-                        {recentReport.events?.map((event: EventWithMods) => <div className="text-lg">
+                {game?.status !== 'ENLISTING' ? <div className="flex flex-col my-5">
+                    {currentPhase ? <Link to={`/games/${params.gameId}/reports/${currentPhase.id}`}>
+                        <div><h3 className="text-xl font-semibold">{`${currentPhase.time} ${currentPhase.dayNumber} Report 🔎`}</h3></div>
+                        {currentPhase.events?.map((event: EventWithMods) => <div className="text-lg ml-2" key={event.id}>
                             <div>{event.message}</div>
-                            <div>{event?.clues.map(clue => <div className="text-sm">
+                            <div>{event?.clues.map(clue => <div className="text-sm ml-2" key={v4()}>
                                 {clue}
                             </div>)}
                             </div>
                         </div>)}
-                    </> : <>
+                    </Link> : <>
                         <div><h3 className="text-xl font-semibold">{`No Reports Yet!`}</h3></div>
                     </> || <>
                         <div>No Reports Yet!</div>
                     </>}
 
-                    <div className="text-lg underline hover:no-underline">
+                    <div className="text-lg underline hover:no-underline py-2">
                         <Link to={`/games/${params.gameId}/reports/`}>
                             All Reports →
                         </Link>
                     </div>
                 </div>
+                    : ''}
 
                 {authorized && (
-                    <div>
+                    <div className="underline my-3">
                         <Link to={`/games/${params.gameId}/edit`}>
                             Edit Game
                         </Link>

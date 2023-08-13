@@ -1,4 +1,4 @@
-import cloudinary, { UploadApiErrorResponse, UploadApiResponse } from "cloudinary";
+import cloudinary from "cloudinary";
 import { writeAsyncIterableToWritable } from "@remix-run/node";
 
 cloudinary.v2.config({

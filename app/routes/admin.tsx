@@ -14,8 +14,9 @@ export default function Admin() {
     return <Layout user={user} navigation={true}>
         <div className="p-5 w-full flex flex-col items-center">
             <h1 className="text-2xl p-3">Admin Zone</h1>
-            <div className="p-2 text-lg">
+            <div className="p-2 text-lg flex flex-col">
                 <Link to={'/admin/create-game'}>Create Game</Link>
+                <Link to={'/admin/edit-roles'}>Edit Roles</Link>
             </div>
         </div>
     </Layout>

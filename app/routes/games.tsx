@@ -62,9 +62,9 @@ export default function Games() {
                 <div className="w-full flex flex-col justify-start items-start bg-licorice-600 rounded-xl">
                     {inputs.search.length > 0 ? (fetcher?.data?.results?.length > 0 ? <>
                         <div className="p-5 text-lg font-semibold">Results:</div>
-                        {fetcher?.data?.results?.map((game: any) => <Link to={`/games/${game.id}`} className="flex flex-row justify-center items-baseline w-full p-5" key={game.id}>
+                        {fetcher?.data?.results?.map((game: any) => <Link to={`/games/${game.id}`} className="flex flex-col sm:flex-row justify-center items-center sm:items-baseline w-full p-5" key={game.id}>
                             <div className="font-semibold text-lg">{game.name}</div>
-                            <div>({game.participatingCharacters._count || "0"} active players)</div>
+                            <div>({game.participatingCharacters?._count || "0"} active players)</div>
                         </Link>)}
                     </> : (fetcher.state === 'loading' ? <>
                         <div className="h-8 w-8 border-transparent border-t-licorice-900 border-4 animate-spin rounded-full" />
@@ -73,9 +73,9 @@ export default function Games() {
                     </>)) : ''}
                     <div className="w-full flex flex-col justify-start items-center bg-licorice-600 rounded-xl">
                         <div className="p-5 text-2xl font-semibold">Recent Games:</div>
-                        {recentGames.map((game: any) => <Link to={`/games/${game.id}`} className="flex flex-row justify-center items-baseline w-full p-5" key={game.id}>
+                        {recentGames.map((game: any) => <Link to={`/games/${game.id}`} className="flex flex-col sm:flex-row justify-center items-center sm:items-baseline w-full p-5" key={game.id}>
                             <div className="font-semibold text-2xl">{game.name}</div>
-                            <div className="text-lg mx-3">({game.participatingCharacters._count || "0"} active players)</div>
+                            <div className="text-lg mx-3">({game.participatingCharacters?._count || "0"} active players)</div>
                         </Link>)}
                     </div>
                 </div>

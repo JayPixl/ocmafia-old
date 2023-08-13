@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import Navbar from "./navbar";
 import Navigation from "./navigation";
 import { Nav } from "~/utils/navigation";
+import { UserWithMods } from "~/utils/types";
 
-export default function Layout({ children, navigation = false, user, navArray }: { children: React.ReactNode, navigation?: boolean, user?: User, navArray?: Nav[] }) {
+export default function Layout({ children, navigation = false, user, navArray }: { children: React.ReactNode, navigation?: boolean, user?: User | UserWithMods, navArray?: Nav[] }) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const triggerMobileNav = () => {
         setMobileNavOpen(curr => !curr)

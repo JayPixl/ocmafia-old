@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const { error, newGame } = await manageHosts({ hostId: id, gameId: params.gameId || '', action: method }, request)
     if (error) return json({ error })
-    return redirect(`/games/${params.gameId}/edit`)
+    return null
 }
 
 export default function EditGameHosts() {
@@ -51,8 +51,6 @@ export default function EditGameHosts() {
         queryParams.set('returnUsernames', 'true')
         fetcher.load(`/fetch/users?${queryParams}`)
     }
-
-    // make fetcher return no results when no inputs
 
     return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)}>
         <div className="text-red-500">

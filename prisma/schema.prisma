@@ -64,10 +64,12 @@ model Character {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
 
-  owner        User    @relation(references: [id], fields: [ownerId], onDelete: Cascade, "OwnedCharacters")
-  ownerId      String  @db.ObjectId
-  activeGame   Game?   @relation(references: [id], fields: [activeGameId], "CharacterParticipant")
-  activeGameId String? @db.ObjectId
+  currentGameId String?
+
+  owner         User     @relation(references: [id], fields: [ownerId], onDelete: Cascade, "OwnedCharacters")
+  ownerId       String   @db.ObjectId
+  activeGames   Game[]   @relation(references: [id], fields: [activeGameIds], "CharacterParticipant")
+  activeGameIds String[] @db.ObjectId
 
   actorInEvents  Event[] @relation("EventActor")
   targetInEvents Event[] @relation("EventTarget")
@@ -81,32 +83,42 @@ model Game {
   location String
   status   GameStatus?
 
+  pendingInviteIds String[]
+  joinRequestIds   String[]
+
+  activeRoleIds String[] @db.ObjectId
+
+  playerCount Int
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
 
-  currentPhase            Phase?                @relation("CurrentPhase")
-  phases                  Phase[]               @relation("GamePhases")
-  currentDay              Int?                  @default(1)
-  characterRoles          Role[]                @relation(references: [id], fields: [roleIds], "ActiveGameRoles")
-  roleIds                 String[]              @db.ObjectId
-  characterStatuses       GameCharacterStatus[]
-  hosts                   User[]                @relation("GameHosts")
-  participatingCharacters Character[]           @relation("CharacterParticipant")
-  participatingPlayers    User[]                @relation("PlayerParticipant")
-  gameMessages            EventMessages?        @relation("GameEventMessages")
+  currentPhaseId            String?
+  phases                    Phase[]               @relation("GamePhases")
+  currentDay                Int?                  @default(1)
+  characterStatuses         GameCharacterStatus[]
+  hosts                     User[]                @relation("GameHosts")
+  participatingCharacters   Character[]           @relation(fields: [participatingCharacterIds], references: [id], "CharacterParticipant")
+  participatingCharacterIds String[]              @db.ObjectId
+  participatingPlayers      User[]                @relation("PlayerParticipant")
+  gameMessages              EventMessages?        @relation("GameEventMessages")
+  gameRoles                 GameRoles?            @relation("GameRoles")
 }
 
 model Phase {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
+  draft Boolean?
+
   time      Time
   dayNumber Int
 
-  game               Game    @relation(references: [id], fields: [gameId], onDelete: Cascade, "GamePhases")
-  gameId             String  @db.ObjectId
-  currentPhaseGame   Game?   @relation(references: [id], fields: [currentPhaseGameId], onDelete: Cascade, "CurrentPhase")
-  currentPhaseGameId String? @unique @db.ObjectId
-  events             Event[] @relation("PhaseEvents")
+  game            Game                      @relation(references: [id], fields: [gameId], onDelete: Cascade, "GamePhases")
+  gameId          String                    @db.ObjectId
+  events          Event[]                   @relation("PhaseEvents")
+  characterStatus PhaseCharacterGameStatus? @relation("PhaseGameCharacterStatus")
+
+  @@unique([time, dayNumber, gameId])
 }
 
 model Event {
@@ -123,7 +135,7 @@ model Event {
   targetId String?    @db.ObjectId
 
   phase   Phase  @relation(fields: [phaseId], references: [id], onDelete: Cascade, "PhaseEvents")
-  phaseId String @unique @db.ObjectId
+  phaseId String @db.ObjectId
 }
 
 model Role {
@@ -136,16 +148,46 @@ model Role {
   alignment   Alignment
   description String
   imageUrl    String?
-  activeGames Game[]    @relation(references: [id], fields: [gameIds], "ActiveGameRoles")
-  gameIds     String[]  @db.ObjectId
 }
 
 model EventMessages {
   id     String @id @default(auto()) @map("_id") @db.ObjectId
-  game   Game   @relation(references: [id], fields: [gameId], "GameEventMessages")
+  game   Game   @relation(references: [id], fields: [gameId], onDelete: Cascade, "GameEventMessages")
   gameId String @unique @db.ObjectId
 
   messages EventMessage[]
+}
+
+model GameRoles {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  game   Game   @relation(references: [id], fields: [gameId], onDelete: Cascade, "GameRoles")
+  gameId String @unique @db.ObjectId
+
+  assignedRoles CharGameRolePairing[]
+}
+
+model PhaseCharacterGameStatus {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  status CharGameStatusPairing[]
+
+  phase   Phase  @relation(references: [id], fields: [phaseId], onDelete: Cascade, "PhaseGameCharacterStatus")
+  phaseId String @unique @db.ObjectId
+}
+
+type CharGameStatusPairing {
+  characterId   String              @db.ObjectId
+  characterName String
+  status        GameCharacterStatus
+}
+
+type CharGameRolePairing {
+  characterId   String    @db.ObjectId
+  characterName String
+  roleName      String
+  notes         String?
+  roleId        String    @db.ObjectId
+  roleAlignment Alignment
 }
 
 type EventMessage {
@@ -228,6 +270,9 @@ enum EventTypes {
   WOUND
   VOTING_SKIP
   RESURRECTION
+  QUIET_NIGHT
+  GAME_START
+  GAME_END
 }
 
 enum GameStatus {

@@ -16,8 +16,9 @@ export const action: ActionFunction = async ({ request }) => {
     const form = await request.formData()
     const gameName = form.get("name")
     const location = form.get("location")
+    const playerCount = Number(form.get("playerCount"))
 
-    if (typeof gameName !== 'string' || typeof location !== 'string') return json({ error: "Invalid form data" }, { status: 500 })
+    if (typeof gameName !== 'string' || typeof location !== 'string' || typeof playerCount !== 'number') return json({ error: "Invalid form data" }, { status: 500 })
 
     let errors = {
         name: gameName.length > 20 && 'Name of game cannot be longer than 20 characters',
@@ -28,19 +29,20 @@ export const action: ActionFunction = async ({ request }) => {
         return json({ errors }, { status: 404 })
     }
 
-    const { newGame, error } = await createGame({ gameName, location })
+    const { newGame, error } = await createGame({ gameName, location, playerCount })
 
     if (error) return json({ error })
     return json({ newGame })
 }
 
-export default function Admin() {
+export default function CreateGame() {
     const { user } = useLoaderData()
     const action = useActionData()
 
     const [inputs, setInputs] = useState({
         name: action?.fields?.name || '',
-        location: action?.fields?.location || ''
+        location: action?.fields?.location || '',
+        playerCount: action?.fields?.playerCount || ''
     })
     return <Layout user={user} navigation={true}>
         <div className="p-5 w-full flex flex-col items-center">
@@ -55,6 +57,7 @@ export default function Admin() {
                     </div>
                     <InputField name="name" type="text" onChange={e => setInputs({ ...inputs, name: e.target.value })} display="Game Name" error={action?.errors?.name} value={inputs.name} />
                     <InputField name="location" type="text" onChange={e => setInputs({ ...inputs, location: e.target.value })} display="Game Location" error={action?.errors?.location} value={inputs.location} />
+                    <InputField name="playerCount" type="number" onChange={e => setInputs({ ...inputs, playerCount: e.target.value })} display="Player Count" error={action?.errors?.playerCount} value={inputs.playerCount} />
                     <button
                         type="submit"
                     >

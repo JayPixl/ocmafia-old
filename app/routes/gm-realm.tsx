@@ -20,6 +20,7 @@ export default function GMRealm() {
                 <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8 flex flex-col items-center">
                     <div className="text-4xl font-bold my-8">Grandmaster's Realm</div>
                     <Link to={`/gm-realm/characters`} className="text-3xl font-semibold my-4 underline hover:no-underline hover:opacity-70">Characters</Link>
+                    <Link to={`/gm-realm/roles`} className="text-3xl font-semibold my-4 underline hover:no-underline hover:opacity-70">Roles</Link>
                 </div>
             </div>
 

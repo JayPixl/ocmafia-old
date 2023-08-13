@@ -1,11 +1,12 @@
-import { EventTypes, Game, Prisma, Time } from "@prisma/client"
+import { EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time } from "@prisma/client"
 import { prisma } from "./prisma.server"
 import { requireClearance } from "./users.server"
-import { GameWithMods } from "./types"
+import { GameWithMods, PhaseWithMods } from "./types"
 
 export const createGame: (form: {
     gameName: string,
-    location: string
+    location: string,
+    playerCount: number
 }) => Promise<{
     error?: string,
     newGame?: Game
@@ -14,10 +15,22 @@ export const createGame: (form: {
         data: {
             name: form.gameName,
             location: form.location,
+            playerCount: form.playerCount,
             phases: {
                 create: {
                     time: 'DAY',
                     dayNumber: 1,
+                    draft: true,
+                    events: {
+                        create: {
+                            draft: true,
+                            message: 'Welcome, players! The Game begins now...',
+                            type: 'GAME_START'
+                        }
+                    },
+                    characterStatus: {
+                        create: true
+                    }
                 }
             },
             gameMessages: {
@@ -27,17 +40,22 @@ export const createGame: (form: {
                         { event: 'RESURRECTION', message: '@@ has come back to life!' },
                         { event: 'WOUND', message: '@@ has been wounded!' },
                         { event: 'VOTING_EXECUTION', message: '@@ has been executed!' },
-                        { event: 'VOTING_SKIP', message: 'The voting phase has been skipped for the day!' }
+                        { event: 'VOTING_SKIP', message: 'The voting phase has been skipped for the day!' },
+                        { event: 'QUIET_NIGHT', message: 'Nothing to report tonight...' },
+                        { event: 'GAME_START', message: 'Welcome, players! The Game begins now...' },
+                        { event: 'GAME_END', message: 'The Game is over!' },
                     ]
                 }
+            },
+            status: 'ENLISTING',
+            gameRoles: {
+                create: {
+
+                }
             }
+
         },
         include: {
-            phases: {
-                select: {
-                    id: true
-                }
-            },
             gameMessages: true
         }
     })
@@ -45,19 +63,6 @@ export const createGame: (form: {
     if (!newGame) return {
         error: "Could not create new game"
     }
-
-    console.log(await prisma.game.update({
-        where: {
-            id: newGame.id
-        },
-        data: {
-            currentPhase: {
-                connect: {
-                    id: newGame?.phases[0]?.id || ''
-                }
-            }
-        }
-    }))
 
     return {
         newGame
@@ -68,7 +73,8 @@ export const getGameById: (
     id: string
 ) => Promise<{
     error?: string,
-    game?: Game
+    game?: Game,
+    currentPhase?: PhaseWithMods
 }> = async (id) => {
     const game = await prisma.game.findFirst({
         where: {
@@ -78,10 +84,24 @@ export const getGameById: (
             hosts: true,
             phases: {
                 include: {
-                    events: true
+                    events: {
+                        select: {
+                            target: true,
+                            actor: true,
+                            phase: true,
+                            targetId: true,
+                            actorId: true,
+                            clues: true,
+                            draft: true,
+                            id: true,
+                            message: true,
+                            phaseId: true,
+                            type: true
+                        }
+                    },
+                    characterStatus: true
                 }
             },
-            currentPhase: true,
             participatingCharacters: {
                 select: {
                     id: true,
@@ -97,11 +117,34 @@ export const getGameById: (
                     }
                 }
             },
+            gameMessages: true,
         }
     })
 
+
+    let currentPhase: PhaseWithMods | undefined = undefined
+
+    if (game?.currentPhaseId) {
+        currentPhase = (await prisma.phase.findFirst({
+            where: {
+                id: game?.currentPhaseId || ''
+            },
+            select: {
+                dayNumber: true,
+                time: true,
+                game: true,
+                events: true,
+                _count: true,
+                gameId: true,
+                id: true,
+                draft: true,
+                characterStatus: true
+            }
+        })) as PhaseWithMods
+    }
+
     if (!game) return { error: "Could not find game with that id" }
-    return { game }
+    return { game, currentPhase }
 }
 
 export const getFilteredGames: (
@@ -147,7 +190,8 @@ export const requireHost: (
 export const editGame: (
     form: {
         name?: string,
-        location?: string
+        location?: string,
+        playerCount?: number
     },
     gameId: string
 ) => Promise<{
@@ -157,8 +201,6 @@ export const editGame: (
     const { game } = await getGameById(gameId)
     if (!game) return { error: "No game found by that Id" }
 
-    console.log(form)
-
     const result = await prisma.game.update({
         where: {
             id: gameId
@@ -167,8 +209,6 @@ export const editGame: (
             ...form
         }
     })
-
-    console.log(result)
 
     if (!result) return { error: "Bad database request" }
     return { newGame: result }
@@ -264,12 +304,11 @@ export const manageCharacters: (
         characterId?: string,
         gameId: string,
         action: string
-    },
-    request: Request
+    }
 ) => Promise<{
     error?: string,
     newGame?: Game
-}> = async ({ characterId, gameId, action }, request) => {
+}> = async ({ characterId, gameId, action }) => {
     const game = await prisma.game.findUnique({
         where: {
             id: gameId
@@ -304,42 +343,98 @@ export const manageCharacters: (
     }
 
     if (action === 'add') {
-        if (
-            (await prisma.character.findFirst({
-                where: {
-                    id: character.id,
-                    activeGameId: game.id
-                }
-            }))
-        ) return {
+        if (character.currentGameId === game.id) return {
             error: "This character is already added!"
         }
-        const result = await prisma.game.update({
-            where: {
-                id: game.id
-            },
-            data: {
-                participatingCharacters: {
-                    connect: {
-                        id: character.id
-                    }
+
+        if (character.currentGameId) return {
+            error: "This character is already currently in a game!"
+        }
+
+        if (game.joinRequestIds.includes(character.id)) {
+
+            const result = await prisma.game.update({
+                where: {
+                    id: game.id
                 },
-                participatingPlayers: {
-                    connect: {
-                        id: owner.id
+                data: {
+                    participatingCharacters: {
+                        connect: {
+                            id: character.id
+                        }
+                    },
+                    participatingPlayers: {
+                        connect: {
+                            id: owner.id
+                        }
+                    },
+                    joinRequestIds: {
+                        set: game.joinRequestIds.filter(id => id !== character?.id)
                     }
-                },
-                characterStatuses: {
-                    push: 'ALIVE'
                 }
+            });
+
+            (await prisma.character.update({
+                where: {
+                    id: character.id
+                },
+                data: {
+                    currentGameId: game.id
+                }
+            }));
+
+            (await prisma.phase.findMany({ where: { gameId: game.id } })).map(async (phase) => {
+                await prisma.phase.update({
+                    where: {
+                        id: phase.id
+                    },
+                    data: {
+                        characterStatus: {
+                            update: {
+                                status: {
+                                    push: {
+                                        characterId: character!.id,
+                                        characterName: character!.name,
+                                        status: 'ALIVE'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
             }
-        })
-        if (!result) return {
-            error: "Something went wrong in adding new character"
+            )
+
+            if (!result) return {
+                error: "Something went wrong in adding new character"
+            }
+            return {
+                newGame: result
+            }
+
+        } else {
+            const result = await prisma.game.update({
+                where: {
+                    id: game.id
+                },
+                data: {
+                    pendingInviteIds: {
+                        push: [
+                            character.id
+                        ]
+                    }
+                }
+            });
+
+            if (!result) return {
+                error: "Something went wrong in adding new character"
+            }
+
+            return {
+                newGame: result
+            }
         }
-        return {
-            newGame: result
-        }
+
     } else if (action === 'delete') {
         const result = await prisma.game.update({
             where: {
@@ -355,9 +450,41 @@ export const manageCharacters: (
                     disconnect: {
                         id: owner.id
                     }
-                }
+                },
             }
-        })
+        });
+
+        (await prisma.character.update({
+            where: {
+                id: character.id
+            },
+            data: {
+                currentGameId: null
+            }
+        }));
+
+        (await prisma.phase.findMany({ where: { gameId: game.id } })).map(async (phase) => {
+            await prisma.phase.update({
+                where: {
+                    id: phase.id
+                },
+                data: {
+                    characterStatus: {
+                        update: {
+                            status: {
+                                deleteMany: {
+                                    where: {
+                                        characterId: character!.id
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        }
+        )
+
         if (!result) return {
             error: "Something went wrong in removing Character"
         }
@@ -373,57 +500,644 @@ export const manageCharacters: (
 
 export const manageReports: (
     gameId: string,
-    action: "update" | "add" | "publish" | "delete",
+    action: "update" | "add" | "publishPhase" | 'unpublishPhase' | "delete" | 'addPhase' | 'deletePhase',
     fields: {
         phaseId?: string,
+        eventId?: string,
         type?: EventTypes,
         message?: string,
         clues?: string,
         actorId?: string,
-        targetId?: string
+        targetId?: string,
+        draft?: boolean
     },
 ) => Promise<{
     error?: string,
     newGame?: GameWithMods
 }> = async (gameId, action, fields) => {
-    let { game } = await getGameById(gameId)
+    let game = ((await getGameById(gameId)).game as GameWithMods)
     if (!game) return {
         error: "Could not find game"
     }
 
-    if (action === 'add') {
-        if (!fields?.phaseId) return {
-            error: "Could not find phase"
-        }
+    if (!fields?.phaseId) return {
+        error: "Could not find phase"
+    }
 
-        const cluesArray = fields?.clues?.split("$$") || []
+    const cluesArray = fields?.clues?.length === 0 ? [] : fields?.clues?.split("$$")
 
-        const event = await prisma.event.create({
-            data: {
-                draft: true,
-                type: fields?.type || 'KILL',
-                message: fields?.message || '',
-                clues: cluesArray,
-                ...(fields?.targetId ? { target: { connect: { id: fields?.targetId } } } : {}),
-                ...(fields?.actorId ? { actor: { connect: { id: fields?.actorId } } } : {}),
-                phase: {
-                    connect: {
-                        id: fields?.phaseId
+    switch (action) {
+        case "add": {
+            const event = await prisma.event.create({
+                data: {
+                    draft: fields.draft!,
+                    type: fields?.type || 'KILL',
+                    message: fields?.message || '',
+                    clues: cluesArray,
+                    ...(fields?.targetId ? { target: { connect: { id: fields?.targetId } } } : {}),
+                    ...(fields?.actorId ? { actor: { connect: { id: fields?.actorId } } } : {}),
+                    phase: {
+                        connect: {
+                            id: fields?.phaseId
+                        }
                     }
                 }
-            }
-        })
+            })
 
-        if (!event) return {
-            error: "Could not create new event"
+            if (!event) return {
+                error: "Could not create new event"
+            }
+            break
         }
 
-        return {
-            newGame: (await getGameById(gameId) as GameWithMods)
+        case "update": {
+            if (!fields?.eventId) return {
+                error: "Could not find event!"
+            }
+            const event = await prisma.event.update({
+                where: {
+                    id: fields.eventId
+                },
+                data: {
+                    type: fields?.type || 'KILL',
+                    message: fields?.message || '',
+                    clues: cluesArray,
+                    ...(fields?.targetId ? { target: { connect: { id: fields?.targetId } } } : { target: { disconnect: true } }),
+                    ...(fields?.actorId ? { actor: { connect: { id: fields?.actorId } } } : { actor: { disconnect: true } }),
+                    draft: fields?.draft ? true : false
+                }
+            })
+
+            if (!event) return {
+                error: "Could not update event"
+            }
+            break
+        }
+
+        case "delete": {
+            if (!fields?.eventId) return {
+                error: "Could not find event!"
+            }
+            const event = await prisma.event.delete({
+                where: {
+                    id: fields.eventId
+                }
+            })
+
+            if (!event) return {
+                error: "Could not delete event"
+            }
+            break
+        }
+
+        case "publishPhase": {
+            const events = await prisma.event.findMany({
+                where: {
+                    phaseId: fields.phaseId
+                }
+            })
+
+            if (!events) return {
+                error: 'No events to publish!'
+            }
+
+            const event = await prisma.event.updateMany({
+                where: {
+                    phaseId: fields.phaseId
+                },
+                data: {
+                    draft: false
+                }
+            })
+
+            const phase = await prisma.phase.update({
+                where: {
+                    id: fields.phaseId
+                },
+                data: {
+                    draft: false
+                }
+            })
+
+            if (!event || !phase) return {
+                error: "Could not publish phase"
+            }
+
+            const { error } = await updateCurrentPhase(game.id)
+
+            if (error) return {
+                error
+            }
+
+            const updatedGame = await prisma.game.findUnique({
+                where: {
+                    id: game.id
+                }
+            })
+
+            if (!updatedGame) return {
+                error: "Problem refreshing game"
+            }
+
+            const currentPhase = await prisma.phase.findFirst({
+                where: {
+                    id: updatedGame.currentPhaseId || ''
+                },
+                include: {
+                    characterStatus: true
+                }
+            })
+
+            if (!currentPhase) return {
+                error: "Could not find current game phase"
+            }
+
+            const oldStatus = currentPhase.characterStatus?.status
+
+            if (!oldStatus) return {
+                error: "Problem finding old status"
+            }
+
+            const newPhase = await prisma.phase.create({
+                data: {
+                    time: currentPhase.time === 'DAY' ? 'NIGHT' : 'DAY',
+                    dayNumber: currentPhase.time === 'DAY' ? currentPhase.dayNumber : (currentPhase.dayNumber || 1) + 1,
+                    game: {
+                        connect: {
+                            id: game.id
+                        }
+                    },
+                    characterStatus: {
+                        create: {
+                            status: oldStatus
+                        }
+                    }
+                }
+            })
+
+            if (!newPhase) return {
+                error: 'Could not create new phase'
+            }
+
+            if (game.status === 'ENLISTING') await startGame(game.id)
+
+            break
+        }
+
+        case "unpublishPhase": {
+            if (game.currentPhaseId !== fields.phaseId) return {
+                error: "Cannot unpublish a phase that isn't the most recent phase!"
+            }
+
+            const event = await prisma.event.updateMany({
+                where: {
+                    phaseId: fields.phaseId
+                },
+                data: {
+                    draft: true
+                }
+            })
+
+            const phase = await prisma.phase.update({
+                where: {
+                    id: fields.phaseId
+                },
+                data: {
+                    draft: true
+                }
+            })
+
+            if (!event || !phase) return {
+                error: "Could not unpublish phase"
+            };
+
+            (await prisma.phase.findMany({ where: { gameId: game.id } })).map(async mappedPhase => {
+                if (mappedPhase.dayNumber > phase.dayNumber || (
+                    phase.time === 'DAY' &&
+                    mappedPhase.time === 'NIGHT' &&
+                    mappedPhase.dayNumber === phase.dayNumber
+                )) {
+                    await prisma.phase.delete({
+                        where: {
+                            id: mappedPhase.id
+                        }
+                    })
+                }
+            })
+
+            const { error } = await updateCurrentPhase(game.id)
+
+            if (error) return {
+                error
+            }
+
+            break
+        }
+
+        case "addPhase": {
+            break
         }
     }
 
     return {
-        error: "Invalid query"
+        newGame: (await getGameById(gameId) as GameWithMods)
+    }
+}
+
+export const manageGameMessages: (
+    gameId: string,
+    method: 'add' | 'delete' | 'edit',
+    eventType: EventTypes,
+    newMessage: string,
+    oldMessage?: string,
+) => Promise<{
+    newGame?: GameWithMods,
+    error?: string
+}> = async (gameId, method, eventType, newMessage, oldMessage) => {
+    const game = await prisma.game.findUnique({ where: { id: gameId } })
+
+    if (!game) return {
+        error: "Could not find game"
+    }
+
+    if (method !== 'delete') {
+        const match = await prisma.eventMessages.findFirst({
+            where: {
+                gameId: gameId,
+                messages: {
+                    some: {
+                        message: newMessage
+                    }
+                }
+            }
+        })
+        if (match) return {
+            error: 'Event by this name already exists! No duplicates.'
+        }
+    } else {
+        if (game?.status !== 'ENLISTING') {
+            return {
+                error: "Cannot delete messages when game is in progress."
+            }
+        }
+    }
+
+
+    switch (method) {
+        case 'add': {
+            console.log("ADDING")
+            const newMsg = await prisma.eventMessages.update({
+                where: {
+                    gameId: gameId
+                },
+                data: {
+                    messages: {
+                        push: [{
+                            event: eventType,
+                            message: newMessage
+                        }]
+                    }
+                }
+            })
+            if (!newMsg) return {
+                error: 'Could not add message...'
+            }
+            break
+        }
+        case 'edit': {
+            console.log("EDITING")
+            const newMsg = await prisma.eventMessages.update({
+                where: {
+                    gameId: gameId
+                },
+                data: {
+                    messages: {
+                        updateMany: {
+                            where: {
+                                message: oldMessage
+                            },
+                            data: {
+                                message: newMessage
+                            }
+                        }
+                    }
+                }
+            })
+            if (!newMsg) return {
+                error: 'Could not edit message...'
+            };
+
+            (await prisma.phase.findMany({ where: { gameId } })).map(async phase => {
+                await prisma.phase.update({
+                    where: {
+                        id: phase.id
+                    },
+                    data: {
+                        events: {
+                            updateMany: {
+                                where: {
+                                    message: oldMessage
+                                },
+                                data: {
+                                    message: newMessage
+                                }
+                            }
+                        }
+                    }
+                })
+            })
+
+            break
+        }
+        case 'delete': {
+            console.log("DELETING")
+            if (!(await prisma.eventMessages.findMany({
+                where: {
+                    gameId: gameId,
+                    messages: {
+                        some: {
+                            event: eventType
+                        }
+                    }
+                }
+            }))) return {
+                error: 'Must be at least one message of each type!'
+            }
+            const newMsg = await prisma.eventMessages.update({
+                where: {
+                    gameId: gameId
+                },
+                data: {
+                    messages: {
+                        deleteMany: {
+                            where: {
+                                message: oldMessage
+                            }
+                        }
+                    }
+                }
+            })
+            if (!newMsg) return {
+                error: 'Could not delete message...'
+            }
+            break
+        }
+    }
+
+    const newGame = await prisma.game.findUnique({
+        where: {
+            id: gameId
+        }
+    })
+    if (!newGame) return {
+        error: "Could not find new game"
+    }
+
+    return {
+        newGame
+    }
+}
+
+export const updateCurrentPhase: (
+    gameId: string
+) => Promise<{
+    error?: string,
+    success?: boolean
+}> = async (gameId) => {
+    const game = await prisma.game.findUnique({
+        where: {
+            id: gameId
+        },
+        include: {
+            phases: {
+                select: {
+                    draft: true,
+                    events: true,
+                    id: true
+                }
+            }
+        }
+    })
+
+    if (!game) return {
+        error: "Could not find Game"
+    }
+
+    let currentPhaseId: string | undefined
+
+    game.phases.map(phase => {
+        if (
+            phase.draft === false
+        ) {
+            currentPhaseId = phase.id
+        }
+    })
+
+    const result = await prisma.game.update({
+        where: {
+            id: gameId
+        },
+        data: {
+            currentPhaseId: currentPhaseId ? currentPhaseId : null
+        }
+    })
+    if (!result) return {
+        error: "Could not update game"
+    }
+
+    return {
+        success: true
+    }
+}
+
+export const manageCharacterStatus: (
+    phaseId: string,
+    characterId: string,
+    status: GameCharacterStatus
+) => Promise<{
+    error?: string,
+    success?: boolean
+}> = async (phaseId, characterId, status) => {
+
+    const character = await prisma.character.findUnique({
+        where: {
+            id: characterId
+        }
+    })
+
+    if (!character) return {
+        error: "Could not find character"
+    }
+
+    const result = await prisma.phaseCharacterGameStatus.update({
+        where: {
+            phaseId
+        },
+        data: {
+            status: {
+                updateMany: {
+                    where: {
+                        characterId
+                    },
+                    data: {
+                        characterId,
+                        characterName: character?.name,
+                        status
+                    }
+                }
+            }
+        }
+    })
+
+    if (!result) return {
+        error: "Could not update phase"
+    }
+
+    return {
+        success: true
+    }
+}
+
+export const startGame: (
+    id: string
+) => Promise<{
+    error?: string,
+    newGame?: GameWithMods
+}> = async (id) => {
+    const game = await prisma.game.findUnique({
+        where: {
+            id
+        }
+    })
+    if (!game) return {
+        error: "Could not find game"
+    }
+
+    const moddedGame: GameWithMods = game as GameWithMods
+
+    const assignedRoles = await prisma.gameRoles.findUnique({
+        where: {
+            gameId: game.id
+        }
+    })
+
+    if (
+        game.status !== 'ENLISTING' ||
+        moddedGame.participatingCharacterIds.length !== moddedGame.playerCount ||
+        game.activeRoleIds.length !== moddedGame.playerCount ||
+        !assignedRoles ||
+        assignedRoles?.assignedRoles.length !== moddedGame.playerCount ||
+        JSON.stringify((assignedRoles?.assignedRoles?.map(pairing => pairing.roleId))?.sort()) !== JSON.stringify((moddedGame.activeRoleIds).sort())
+    ) return {
+        error: "Could not start game"
+    }
+
+    const newGame = (await prisma.game.update({
+        where: {
+            id: game.id
+        },
+        data: {
+            status: 'ONGOING'
+        }
+    })) as GameWithMods
+
+    return {
+        newGame
+    }
+}
+
+export const toggleGameJoinRequest: (
+    characterId: string,
+    gameId: string
+) => Promise<{
+    error?: string,
+    newGame?: GameWithMods
+}> = async (characterId, gameId) => {
+    const game = (
+        await prisma.game.findUnique({
+            where: {
+                id: gameId
+            },
+            select: {
+                joinRequestIds: true,
+                pendingInviteIds: true
+            }
+        })
+    )
+
+    if (
+        game?.joinRequestIds.includes(characterId)
+    ) {
+
+        const newGame = await prisma.game.update({
+            where: {
+                id: gameId
+            },
+            data: {
+                joinRequestIds: {
+                    set: [...game.joinRequestIds.filter(val => val !== characterId)]
+                }
+            }
+        })
+
+        if (!newGame) return {
+            error: "Could not update game"
+        }
+
+        return {
+            newGame
+        }
+
+    } else if (game?.pendingInviteIds.includes(characterId)) {
+
+        await prisma.game.update({
+            where: {
+                id: gameId
+            },
+            data: {
+                joinRequestIds: {
+                    push: [
+                        characterId
+                    ]
+                },
+                pendingInviteIds: {
+                    set: game.pendingInviteIds.filter(id => id !== characterId)
+                }
+            }
+        })
+
+        const { error, newGame } = await manageCharacters({ characterId, gameId, action: 'add' })
+
+        if (!newGame || error) return {
+            error
+        }
+
+        return {
+            newGame
+        }
+
+    } else {
+
+        const newGame = await prisma.game.update({
+            where: {
+                id: gameId
+            },
+            data: {
+                joinRequestIds: {
+                    push: [
+                        characterId
+                    ]
+                }
+            }
+        })
+
+        if (!newGame) return {
+            error: "Could not update game"
+        }
+
+        return {
+            newGame
+        }
+
     }
 }

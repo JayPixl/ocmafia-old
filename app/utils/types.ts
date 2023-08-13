@@ -1,14 +1,24 @@
-import { Character, Event, Game, Inbox, Phase, User } from "@prisma/client";
+import { Alignment, Character, Event, EventMessages, Game, GameRoles, Inbox, Phase, PhaseCharacterGameStatus, Role, User } from "@prisma/client";
 
 export interface GameWithMods extends Game {
     hosts?: User[],
     participatingCharacters?: CharacterWithMods[],
     phases?: Phase[],
-    currentPhase?: Phase
+    gameMessages?: EventMessages,
+    activeRoles?: Role[],
+    gameRoels?: GameRoles
 }
 
 export interface CharacterWithMods extends Character {
     owner?: User
+}
+
+export interface CharacterWithRole extends CharacterWithMods {
+    role?: {
+        roleId: string,
+        roleAlignment: Alignment,
+        roleName: string
+    }
 }
 
 export interface UserWithMods extends User {
@@ -18,10 +28,17 @@ export interface UserWithMods extends User {
 }
 
 export interface EventWithMods extends Event {
-    phase?: Phase
+    phase?: Phase,
+    actor?: CharacterWithMods,
+    target?: CharacterWithMods
 }
 
 export interface PhaseWithMods extends Phase {
     game?: GameWithMods,
-    events?: EventWithMods[]
+    events?: EventWithMods[],
+    characterStatus?: PhaseCharacterGameStatus
+}
+
+export interface RoleWithNotes extends Role {
+    notes?: string
 }

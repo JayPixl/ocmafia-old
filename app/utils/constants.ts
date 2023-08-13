@@ -1,4 +1,4 @@
-import { AvatarColors, Clearance } from "@prisma/client"
+import { Alignment, AvatarColors, Clearance } from "@prisma/client"
 
 export const clearanceMap: {
     [index: string]: Clearance[]
@@ -29,4 +29,22 @@ export const GameCharacterStatusEmojis: any = {
     ALIVE: '💚',
     WOUNDED: '🩹',
     DEAD: '💀'
+}
+
+export const RoleAlignmentEmojis: any = {
+    TOWN: '🏠',
+    MAFIA: "🔪",
+    NEUTRAL: "🦄",
+    HOSTILE: "💣"
+}
+
+export const requiredTargetFields: any = {
+    KILL: ['target', 'actor'],
+    VOTING_EXECUTION: ['target'],
+    WOUND: ['target', 'actor'],
+    VOTING_SKIP: [],
+    RESURRECTION: ['target'],
+    QUIET_NIGHT: [],
+    GAME_START: [],
+    GAME_END: []
 }

@@ -59,7 +59,8 @@ export const createCharacter: (
                 connect: {
                     id: user.id
                 }
-            }
+            },
+            currentGameId: null
         }
     })
 

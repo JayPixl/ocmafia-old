@@ -8,6 +8,7 @@ import { Modal } from "~/components/modal";
 import SelectBox from "~/components/select-box";
 import UserCircle from "~/components/user-circle";
 import { gradientMap } from "~/utils/constants";
+import { formatCase } from "~/utils/formatters";
 import { getProfileData, updateUserProfile } from "~/utils/profile.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -48,7 +49,7 @@ export default function Edit() {
     const getValuesFromMap: (map: { color: string, styles?: string }[]) => { name: string, value: string }[] = (map) => {
         let arr: { value: string, name: string }[] = []
         map.map(obj => {
-            arr.push({ value: obj.color, name: `${obj.color[0] + obj.color.slice(1).toLowerCase()}` })
+            arr.push({ value: obj.color, name: `${formatCase(obj.color)}` })
         })
         return arr
     }
