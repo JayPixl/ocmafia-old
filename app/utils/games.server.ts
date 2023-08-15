@@ -1,7 +1,7 @@
 import { EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time } from "@prisma/client"
 import { prisma } from "./prisma.server"
 import { requireClearance } from "./users.server"
-import { GameWithMods, PhaseWithMods } from "./types"
+import { CharacterWithMods, GameWithMods, PhaseWithMods } from "./types"
 
 export const createGame: (form: {
     gameName: string,
@@ -372,7 +372,13 @@ export const manageCharacters: (
                         set: game.joinRequestIds.filter(id => id !== character?.id)
                     }
                 }
-            });
+            })
+
+            const { activeCharacter, error } = await userHasActiveCharacter(character.ownerId)
+            if (!error && activeCharacter) return {
+                error: "You already have an active character!"
+            };
+
 
             (await prisma.character.update({
                 where: {
@@ -1139,5 +1145,36 @@ export const toggleGameJoinRequest: (
             newGame
         }
 
+    }
+}
+
+export const userHasActiveCharacter: (
+    userId: string
+) => Promise<{
+    activeCharacter?: CharacterWithMods,
+    success?: boolean,
+    error?: string
+}> = async (userId) => {
+    const user = await prisma.user.findUnique({
+        where: {
+            id: userId
+        }
+    })
+    if (!user) return {
+        error: "Could not find user"
+    }
+
+    const activeCharacter = (await prisma.character.findMany({
+        where: {
+            ownerId: userId,
+            currentGameId: {
+                not: null
+            }
+        }
+    }))[0]
+
+    return {
+        activeCharacter,
+        success: true
     }
 }

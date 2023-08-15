@@ -6,6 +6,7 @@ import Layout from "~/components/layout";
 import { getUser } from "~/utils/users.server";
 import CharacterAvatar from "~/components/character-avatar";
 import { prisma } from "~/utils/prisma.server";
+import { getGameById, userHasActiveCharacter } from "~/utils/games.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const { user } = await getUser(request)
@@ -24,11 +25,15 @@ export const loader: LoaderFunction = async ({ request }) => {
         },
         take: 3
     })
-    return json({ user, recentGames })
+
+    const { activeCharacter, error } = user ? await userHasActiveCharacter(user.id) : { activeCharacter: undefined, error: undefined }
+    const { game } = activeCharacter && !error ? await getGameById(activeCharacter.currentGameId!) : { game: undefined }
+
+    return json({ user, recentGames, currentGame: game })
 }
 
 export default function Games() {
-    const { user, recentGames } = useLoaderData<typeof loader>()
+    const { user, recentGames, currentGame } = useLoaderData<typeof loader>()
     const fetcher = useFetcher()
     const [inputs, setInputs] = useState({
         search: ''
@@ -63,7 +68,7 @@ export default function Games() {
                     {inputs.search.length > 0 ? (fetcher?.data?.results?.length > 0 ? <>
                         <div className="p-5 text-lg font-semibold">Results:</div>
                         {fetcher?.data?.results?.map((game: any) => <Link to={`/games/${game.id}`} className="flex flex-col sm:flex-row justify-center items-center sm:items-baseline w-full p-5" key={game.id}>
-                            <div className="font-semibold text-lg">{game.name}</div>
+                            <div className="font-semibold text-lg mr-2">{game.name}</div>
                             <div>({game.participatingCharacters?._count || "0"} active players)</div>
                         </Link>)}
                     </> : (fetcher.state === 'loading' ? <>
@@ -71,13 +76,20 @@ export default function Games() {
                     </> : <>
                         <div className="p-5 text-2xl font-semibold">No Results!</div>
                     </>)) : ''}
-                    <div className="w-full flex flex-col justify-start items-center bg-licorice-600 rounded-xl">
+
+                    {!currentGame ? <div className="w-full flex flex-col justify-start items-center bg-licorice-600 rounded-xl">
                         <div className="p-5 text-2xl font-semibold">Recent Games:</div>
                         {recentGames.map((game: any) => <Link to={`/games/${game.id}`} className="flex flex-col sm:flex-row justify-center items-center sm:items-baseline w-full p-5" key={game.id}>
                             <div className="font-semibold text-2xl">{game.name}</div>
                             <div className="text-lg mx-3">({game.participatingCharacters?._count || "0"} active players)</div>
                         </Link>)}
-                    </div>
+                    </div> : <div className="w-full flex flex-col justify-start items-center bg-licorice-600 rounded-xl">
+                        <div className="p-5 text-2xl font-semibold">Current Game:</div>
+                        <Link to={`/games/${currentGame.id}`} className="flex flex-col sm:flex-row justify-center items-center sm:items-baseline w-full p-5" key={currentGame.id}>
+                            <div className="font-semibold text-2xl">{currentGame.name}</div>
+                            <div className="text-lg mx-3">({currentGame.participatingCharacters?._count || "0"} active players)</div>
+                        </Link>
+                    </div>}
                 </div>
 
             </div>

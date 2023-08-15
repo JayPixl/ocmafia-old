@@ -1,6 +1,6 @@
 # OC Mafia
 
-### >>>> [Enter the world of OC Mafia]() <<<<
+### >>>> [Enter the world of OC Mafia](https://ocmafia.vercel.app/) <<<<
 
 *Created by Joshua Lawrence, Jr.*
 
