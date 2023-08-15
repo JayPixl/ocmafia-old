@@ -13,11 +13,8 @@ export const loader: LoaderFunction = async ({ request }) => {
         {
             id: true,
             name: true,
-            participatingPlayers: {
-                select: {
-                    _count: true
-                }
-            }
+            playerCount: true,
+            participatingCharacterIds: true
         }, 5)
 
 

@@ -85,7 +85,7 @@ export const getMessages: (
     const senders = await prisma.user.findMany({
         where: {
             id: {
-                in: inbox.inboxItems.map(item => item.senderId) as string[]
+                in: inbox.inboxItems.map(item => item.senderId).filter(item => item !== null && item !== '') as string[]
             }
         }
     })
