@@ -6,7 +6,7 @@ import Navigation from "./navigation";
 import { Nav } from "~/utils/navigation";
 import { UserWithMods } from "~/utils/types";
 
-export default function Layout({ children, navigation = false, user, navArray }: { children: React.ReactNode, navigation?: boolean, user?: User | UserWithMods, navArray?: Nav[] }) {
+export default function Layout({ children, navigation = false, user, navArray }: { children: React.ReactNode, navigation?: boolean, user?: UserWithMods, navArray?: Nav[] }) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const triggerMobileNav = () => {
         setMobileNavOpen(curr => !curr)
@@ -15,7 +15,7 @@ export default function Layout({ children, navigation = false, user, navArray }:
         <>
             <Outlet />
             <div className="bg-gradient-to-b from-licorice-700 to-licorice-800 text-dogwood font-ysabeau-office w-full min-h-screen flex flex-col items-stretch">
-                <Navbar user={user} triggerMobileNav={triggerMobileNav} navigation={navigation} />
+                <Navbar user={user} triggerMobileNav={triggerMobileNav} navigation={navigation} unreadMessages={user?.inbox?.inboxItems?.filter(item => item.read === false)?.length} />
                 {navigation ? (
                     <>
                         <Navigation navOpen={mobileNavOpen} navArray={navArray} />

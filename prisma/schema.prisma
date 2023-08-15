@@ -201,9 +201,13 @@ type Link {
 }
 
 type InboxItem {
+  uniqueId String @default(uuid())
+
+  type      MessageTypes
   message   String
   read      Boolean
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
+  link      String?
   senderId  String?
 }
 
@@ -279,4 +283,12 @@ enum GameStatus {
   ENLISTING
   ONGOING
   COMPLETED
+}
+
+enum MessageTypes {
+  GAME_INVITE
+  PLAYER_JOINED
+  PHASE_PUBLISHED
+  GAME_COMPLETED
+  NEW_FOLLOWER
 }

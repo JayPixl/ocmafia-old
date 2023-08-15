@@ -7,6 +7,7 @@ import Layout from "~/components/layout";
 import { getUser } from "~/utils/users.server";
 import { buildNavigation } from "~/utils/navigation";
 import { V2_ErrorBoundaryComponent } from "@remix-run/react/dist/routeModules";
+import Slideshow from "~/components/slideshow";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { user } = await getUser(request)
@@ -22,19 +23,54 @@ export default function Index() {
 
   return (
     <Layout user={user} navigation={true}>
-      <div
-        style={{ backgroundImage: "url('/images/mafia-by-k1tty.png')" }}
-        className="bg-cover bg-center w-full h-[35rem]"
-      >
-        <div className="h-full w-full backdrop-blur-sm backdrop-brightness-50 flex flex-col p-5 justify-center items-center text-center">
-          <div className="font-bold text-5xl p-5">
-            Welcome to OC Mafia!
-          </div>
-          {!user && <Link to={'/login'}>
-            <div className="text-3xl border-[3px] text-white hover:border-dogwood rounded-xl py-2 px-3 self-center mt-8 hover:bg-none bg-gradient-to-b from-bittersweet to-cinnabar border-bittersweet hover:text-dogwood transition md:text-2xl">
-              Get Started
+
+      <Slideshow elements={[
+        {
+          imageUrl: '/images/mafia-by-k1tty.png',
+          credit: {
+            display: 'K1tty5 on DeviantArt',
+            url: 'https://www.deviantart.com/k1tty5'
+          },
+          content: <>
+            <div className="text-3xl md:text-5xl font-bold my-5">
+              Welcome to OC Mafia!
             </div>
-          </Link>}
+            {!user ? <Link to={`/archive/about`} className="text-lg md:text-xl font-semibold my-3 underline hover:no-underline">
+              First time here? Read more about OC Mafia! 🔎
+            </Link> : <Link to={`/games`} className="text-lg md:text-xl font-semibold my-3 underline hover:no-underline">
+              Find a game! 🔎
+            </Link>}
+          </>
+        },
+        {
+          imageUrl: '/images/evoidless-peach-dark-angel.png',
+          credit: {
+            display: 'Evoidless on DeviantArt',
+            url: 'https://www.deviantart.com/evoidless'
+          },
+          content: <>
+            <div className="text-3xl md:text-5xl font-bold my-5">
+              Season 2 begins soon!
+            </div>
+            <div className="text-lg md:text-xl font-semibold my-3">
+              Keep an eye out for updates!
+            </div>
+          </>
+        }
+      ]} />
+
+      <div className="py-12 sm:py-16 w-full border-b-licorice-900 border-b-2 flex justify-center">
+        <Link to={`https://discord.gg/XaTgNVxc`} className="flex flex-row items-center text-lg sm:text-3xl my-2 border-[1px] border-neonblue text-white rounded-2xl py-2 px-3 hover:bg-transparent bg-neonblue hover:border-white transition">
+          Join our Discord server! <img src="/images/discord-mark-white.svg" className="h-8 w-8 sm:h-12 sm:w-12 ml-4" />
+        </Link>
+      </div>
+
+      <div className="px-8 py-12 sm:py-16 w-full border-b-licorice-900 border-b-2 bg-dogwood text-licorice-800">
+        <div className="border-b border-b-licorice-900 text-2xl my-6 w-full">
+          What is OC Mafia?
+        </div>
+        <div className="my-2">
+          OC Mafia is an online game similar to traditional Forum Mafia, where you can bring your Original Characters, or OCs, to life in a perilous game of betrayal and charisma. Do you think you have what it takes to survive?
         </div>
       </div>
     </Layout>

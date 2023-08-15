@@ -27,7 +27,7 @@ export default function Profile() {
         <div className="flex justify-center items-center">
             {profileData ? (
                 <div className="flex flex-col items-center rounded-xl bg-gradient-to-br from-licorice-600 to-licorice-700 min-h-[35rem] p-5 m-5 w-full md:w-2/3 relative">
-                    <div className="relative w-full flex flex-row justify-start items-end border-b-2 border-licorice-800 pb-8 md:pb-1 md:p-2 overflow-clip ">
+                    <div className="relative w-full flex flex-row justify-start items-end border-b-2 border-licorice-800 pb-8 md:pb-1 md:p-2">
                         {user && (owner ? <Link
                             to={`/profile/${params.userId}/edit`}
                             className="absolute right-0 top-0 text-sm md:text-xl"
@@ -38,7 +38,7 @@ export default function Profile() {
                                 type="submit"
                                 name="_action"
                                 value='unfollow'
-                                className="absolute right-2 top-2 text-base md:text-lg px-2 rounded-full border-2 border-neonblue text-neonblue hover:border-transparent hover:bg-neonblue hover:text-licorice-600 flex flex-row justify-center items-center transition"
+                                className="absolute right-0 top-0 text-base md:text-lg px-2 rounded-full border-2 border-neonblue text-neonblue hover:border-transparent hover:bg-neonblue hover:text-licorice-600 flex flex-row justify-center items-center transition"
                             >
                                 <span className="mr-2 font-bold">x</span>
                                 <span>Unfollow</span>
@@ -46,7 +46,7 @@ export default function Profile() {
                                 type="submit"
                                 name="_action"
                                 value='follow'
-                                className="absolute right-1 top-1 text-base md:text-lg px-2 rounded-full border-2 border-neonblue text-neonblue hover:border-transparent hover:bg-neonblue hover:text-licorice-600 flex flex-row justify-center items-center transition hover:scale-110"
+                                className="absolute right-0 top-0 text-base md:text-lg px-2 rounded-full border-2 border-neonblue text-neonblue hover:border-transparent hover:bg-neonblue hover:text-licorice-600 flex flex-row justify-center items-center transition hover:scale-110"
                             >
                                 <span className="mr-2 font-bold">+</span>
                                 <span>Follow</span>
@@ -59,7 +59,7 @@ export default function Profile() {
 
                         <UserCircle avatarType={profileData.avatar.avatarType} avatarColor={profileData.avatar.avatarColor} avatarUrl={profileData.avatar.avatarUrl} username={profileData.username} size="XLARGE" />
                         <div className="flex flex-col md:justify-between justify-center self-stretch">
-                            <div className={`${profileData.username.length > 10 ? "text-3xl" : 'text-4xl'} px-3 lg:text-5xl lg:px-8 font-semibold`}>
+                            <div className={`${profileData.username.length > 10 ? "text-3xl" : 'text-4xl'} px-3 lg:text-5xl lg:px-8 font-semibold mt-8 md:mt-4`}>
                                 {profileData.username}
                             </div>
                             <div className="absolute left-1 bottom-1 md:static md:px-3 md:pt-1 lg:pt-3 lg:px-8 font-semibold">
@@ -124,7 +124,7 @@ export default function Profile() {
                                             size="LARGE"
                                         />
                                     </div>
-                                    <div className="w-full text-center text-sm md:text-base">
+                                    <div className="min-w-full text-center text-sm md:text-base">
                                         {follower.username}
                                     </div>
                                 </div>
@@ -146,7 +146,7 @@ export default function Profile() {
                                             size="LARGE"
                                         />
                                     </div>
-                                    <div className="w-full text-center text-sm md:text-base">
+                                    <div className="min-w-full text-center text-sm md:text-base">
                                         {follower.username}
                                     </div>
                                 </div>

@@ -1,4 +1,4 @@
-import { Alignment, Character, Event, EventMessages, Game, GameRoles, Inbox, Phase, PhaseCharacterGameStatus, Role, User } from "@prisma/client";
+import { Alignment, Avatar, Character, Event, EventMessages, Game, GameRoles, Inbox, InboxItem, Phase, PhaseCharacterGameStatus, Role, User } from "@prisma/client";
 
 export interface GameWithMods extends Game {
     hosts?: User[],
@@ -41,4 +41,9 @@ export interface PhaseWithMods extends Phase {
 
 export interface RoleWithNotes extends Role {
     notes?: string
+}
+
+export interface ExtendedInboxItem extends InboxItem {
+    avatar?: Avatar,
+    senderUsername: string
 }

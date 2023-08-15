@@ -144,7 +144,7 @@ export const getUser: (request: Request, password?: boolean) => Promise<{
     const { userId } = await getUserId(request)
     if (!userId) return { error: "Invalid User ID", status: 400 }
 
-    let user = (await prisma.user.findUnique({ where: { id: userId } }))
+    let user = (await prisma.user.findUnique({ where: { id: userId }, include: { inbox: { select: { inboxItems: true } } } }))
     if (!user) throw redirect('/logout')
 
     if (!password) user = {
