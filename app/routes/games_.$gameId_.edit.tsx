@@ -216,6 +216,15 @@ export default function EditGame() {
 
                         <div className="my-4">
                             <Link
+                                to={`/games/${params.gameId}/kill-calculator`}
+                                className="text-xl border-[1px] border-neonblue text-neonblue rounded-lg py-1 px-2 my-3 hover:bg-neonblue hover:text-licorice-800 transition md:text-2xl"
+                            >
+                                Kill Calculator
+                            </Link>
+                        </div>
+
+                        <div className="my-4">
+                            <Link
                                 to={`/games/${params.gameId}/character-status/edit`}
                                 className="text-xl border-[1px] border-neonblue text-neonblue rounded-lg py-1 px-2 my-3 hover:bg-neonblue hover:text-licorice-800 transition md:text-2xl"
                             >

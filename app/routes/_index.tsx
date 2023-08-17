@@ -59,19 +59,24 @@ export default function Index() {
         }
       ]} />
 
-      <div className="py-12 sm:py-16 w-full border-b-licorice-900 border-b-2 flex justify-center">
+      <div className="py-12 sm:py-16 w-full border-b-licorice-900 border-b-2 flex flex-col items-center justify-center">
         <Link to={`https://discord.gg/XaTgNVxc`} className="flex flex-row items-center text-lg sm:text-3xl my-2 border-[1px] border-neonblue text-white rounded-2xl py-2 px-3 hover:bg-transparent bg-neonblue hover:border-white transition">
           Join our Discord server! <img src="/images/discord-mark-white.svg" className="h-8 w-8 sm:h-12 sm:w-12 ml-4" />
         </Link>
       </div>
 
-      <div className="px-8 py-12 sm:py-16 w-full border-b-licorice-900 border-b-2 bg-dogwood text-licorice-800">
-        <div className="border-b border-b-licorice-900 text-2xl my-6 w-full">
+      <div className="px-8 py-12 sm:py-14 w-full border-b-licorice-900 border-b-2 bg-dogwood text-licorice-800 flex flex-col">
+        <div className="border-b border-b-licorice-900 text-2xl my-4 w-full">
           What is OC Mafia?
         </div>
         <div className="my-2">
-          OC Mafia is an online game similar to traditional Forum Mafia, where you can bring your Original Characters, or OCs, to life in a perilous game of betrayal and charisma. Do you think you have what it takes to survive?
+          OC Mafia is an online game similar to traditional Forum Mafia,
+          where you can bring your Original Characters, or OCs, to life in a perilous game of betrayal and charisma.
+          Do you think you have what it takes to survive?
         </div>
+        <Link to={'/archive/about'} className="underline hover:no-underline w-full text-right">
+          Read more →
+        </Link>
       </div>
     </Layout>
   );

@@ -22,7 +22,8 @@ export default {
     },
     fontFamily: {
       ubuntu: ['Ubuntu', 'sans-serif'],
-      "ysabeau-office": ['Ysabeau Office', 'sans-serif']
+      "ysabeau-office": ['Ysabeau Office', 'sans-serif'],
+      "dancing-script": ['Dancing Script', 'cursive']
     }
   },
   plugins: [],
