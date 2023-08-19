@@ -2,6 +2,7 @@ import { Alignment, EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time }
 import { prisma } from "./prisma.server"
 import { requireClearance } from "./users.server"
 import { CharacterWithMods, GameWithMods, PhaseWithMods } from "./types"
+import { sendMessage } from "./inbox.server"
 
 export const createGame: (form: {
     gameName: string,
@@ -415,7 +416,11 @@ export const manageCharacters: (
                     }
                 })
             }
-            )
+            );
+
+            (await prisma.user.findMany({ where: { hostingGameId: game.id } })).map(async host => {
+                await sendMessage(process.env.OCM_OFFICIAL_ID || '', host.id, `${character?.name} has joined ${game.name}!`, 'PLAYER_JOINED', `/games/${game.id}/`)
+            })
 
             if (!result) return {
                 error: "Something went wrong in adding new character"
@@ -441,6 +446,8 @@ export const manageCharacters: (
             if (!result) return {
                 error: "Something went wrong in adding new character"
             }
+
+            await sendMessage(process.env.OCM_OFFICIAL_ID || '', character.ownerId, `You've been invited to join ${game.name}!`, 'GAME_INVITE', `/games/${game.id}`)
 
             return {
                 newGame: result
