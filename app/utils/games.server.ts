@@ -1256,6 +1256,59 @@ export const EndGame: (
         }
     }) : undefined
 
+    game.participatingCharacterIds.map(async id => {
+        const character = await prisma.character.findUnique({
+            where: {
+                id
+            }
+        })
+
+        if (!character) return;
+
+        const userRewards: Prisma.UserUpdateInput = winnerIds.includes(character.id) ? {
+            crowns: {
+                increment: game.winnerCrowns
+            },
+            rubies: {
+                increment: game.winnerRubies || 0
+            }
+        } : {
+            rubies: {
+                increment: game.loserRubies || 0
+            }
+        }
+
+        const characterRewards: Prisma.CharacterUpdateInput = winnerIds.includes(character.id) ? {
+            crowns: {
+                increment: game.winnerCrowns
+            }
+        } : {
+            strikes: {
+                increment: game.loserStrikes
+            }
+        }
+
+        await prisma.user.update({
+            where: {
+                id: character.ownerId
+            },
+            data: {
+                ...userRewards
+            }
+        })
+
+        await prisma.character.update({
+            where: {
+                id: character.id
+            },
+            data: {
+                ...characterRewards
+            }
+        })
+
+        await sendMessage(process.env.OCM_OFFICIAL_ID || '', character.ownerId, `${game.name} is over! See the results!`, 'GAME_COMPLETED', `/games/${game.id}`)
+    })
+
     return {
         newGame: await prisma.game.findUnique({ where: { id: gameId } }) as GameWithMods
     }
