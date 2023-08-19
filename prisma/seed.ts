@@ -2,22 +2,14 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 async function main() {
     let updates: any[] = [];
-    (await prisma.gameRoles.findMany()).map(async gameRoles => {
-        const update = await prisma.gameRoles.update({
+    (await prisma.game.findMany()).map(async game => {
+        const update = await prisma.game.update({
             where: {
-                id: gameRoles.id
+                id: game.id
             },
             data: {
-                assignedRoles: {
-                    updateMany: {
-                        where: {
-                            notes: null
-                        },
-                        data: {
-                            notes: ''
-                        }
-                    }
-                }
+                winnerCrowns: 1,
+                loserStrikes: 1
             }
         })
         updates.push(update)

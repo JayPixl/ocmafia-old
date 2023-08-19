@@ -1,4 +1,4 @@
-import { EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time } from "@prisma/client"
+import { Alignment, EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time } from "@prisma/client"
 import { prisma } from "./prisma.server"
 import { requireClearance } from "./users.server"
 import { CharacterWithMods, GameWithMods, PhaseWithMods } from "./types"
@@ -52,7 +52,11 @@ export const createGame: (form: {
                 create: {
 
                 }
-            }
+            },
+            winnerCrowns: 1,
+            winnerRubies: 25,
+            loserStrikes: 1,
+            loserRubies: 10
 
         },
         include: {
@@ -191,7 +195,9 @@ export const editGame: (
     form: {
         name?: string,
         location?: string,
-        playerCount?: number
+        playerCount?: number,
+        winnerCrowns?: number,
+        loserStrikes?: number
     },
     gameId: string
 ) => Promise<{
@@ -1176,5 +1182,52 @@ export const userHasActiveCharacter: (
     return {
         activeCharacter,
         success: true
+    }
+}
+
+export const EndGame: (
+    gameId: string,
+    winnerIds: string[],
+    winningFaction: Alignment
+) => Promise<{
+    error?: string,
+    newGame?: GameWithMods
+}> = async (gameId, winnerIds, winningFaction) => {
+    const game = await prisma.game.findUnique({
+        where: {
+            id: gameId
+        }
+    })
+
+    if (!game) return {
+        error: "Could not find game"
+    }
+
+    if (game.status !== 'ONGOING') return {
+        error: "Game is not ready to complete!"
+    }
+
+    await prisma.game.update({
+        where: {
+            id: game.id
+        },
+        data: {
+            status: 'COMPLETED',
+            gameWinnerIds: winnerIds,
+            winningFaction
+        }
+    })
+
+    await prisma.character.updateMany({
+        where: {
+            currentGameId: game.id
+        },
+        data: {
+            currentGameId: null
+        }
+    })
+
+    return {
+        newGame: await prisma.game.findUnique({ where: { id: gameId } }) as GameWithMods
     }
 }

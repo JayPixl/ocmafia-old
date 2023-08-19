@@ -12,7 +12,7 @@ import { validateLength, validateStat } from "~/utils/validators";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const { user } = await getUser(request)
-    if (!user || ((await prisma.user.findUnique({ where: { id: user?.id }, select: { _count: { select: { characters: true } } } }))?._count.characters || 10) >= (user?.characterLimit || 0)) return redirect("/gm-realm/characters")
+    if (!user || ((await prisma.character.findMany({ where: { ownerId: user.id } })).length) >= (user?.characterLimit || 1)) return redirect("/gm-realm/characters")
 
     return json({ user })
 }

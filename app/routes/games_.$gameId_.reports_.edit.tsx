@@ -287,7 +287,7 @@ export default function EditReports() {
                             value={inputs.eventType}
                             className="bg-white font-bold text-lg rounded-lg text-licorice-800 py-1 hover:opacity-80"
                         >
-                            {Object.values(EventTypes).map(type => <option key={type} value={type}>
+                            {Object.values(EventTypes).filter(type => type !== 'GAME_END').map(type => <option key={type} value={type}>
                                 {type}
                             </option>)}
                         </select>
@@ -430,7 +430,7 @@ export default function EditReports() {
                                 value={inputs?.[event.id].eventType}
                                 className="bg-white font-bold text-lg rounded-lg text-licorice-800 py-1 hover:opacity-80"
                             >
-                                {Object.values(EventTypes).map(type => <option key={type} value={type}>
+                                {Object.values(EventTypes).filter(type => type !== 'GAME_END').map(type => <option key={type} value={type}>
                                     {type}
                                 </option>)}
                             </select>

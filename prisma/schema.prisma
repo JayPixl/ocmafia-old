@@ -83,10 +83,17 @@ model Game {
   location String
   status   GameStatus?
 
+  winnerCrowns Int
+  winnerRubies Int?
+  loserStrikes Int
+  loserRubies  Int?
+
   pendingInviteIds String[]
   joinRequestIds   String[]
 
-  activeRoleIds String[] @db.ObjectId
+  activeRoleIds  String[]   @db.ObjectId
+  gameWinnerIds  String[]   @db.ObjectId
+  winningFaction Alignment?
 
   playerCount Int
 

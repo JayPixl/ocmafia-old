@@ -1,4 +1,4 @@
-import { Alignment, Game, Role, User } from "@prisma/client";
+import { Alignment, CharGameRolePairing, Game, Role, User } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
 import { v4 } from "uuid";
@@ -37,11 +37,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     const { character, myRole } = user?.id ? await getMyCharacterGameProfile(user.id, game.id) : { character: undefined, myRole: undefined }
 
-    return json({ user, game, authorized, currentPhase, roles, registeredCharacter: character, myRole })
+    const completedRoles = (game.status === 'COMPLETED' ? (await prisma.gameRoles.findUnique({ where: { gameId: game.id } }))?.assignedRoles : undefined)
+
+    return json({ user, game, authorized, currentPhase, roles, registeredCharacter: character, myRole, completedRoles })
 }
 
 export default function Games() {
-    const { user, game, authorized, currentPhase, roles, registeredCharacter, myRole }: { user?: UserWithMods, game?: GameWithMods, authorized?: boolean, currentPhase?: PhaseWithMods, roles?: { id: string, name: string, alignment: Alignment }[], registeredCharacter?: CharacterWithRole, myRole?: Role } = useLoaderData()
+    const { user, game, authorized, currentPhase, roles, registeredCharacter, myRole, completedRoles }: { user?: UserWithMods, game?: GameWithMods, authorized?: boolean, currentPhase?: PhaseWithMods, roles?: { id: string, name: string, alignment: Alignment }[], registeredCharacter?: CharacterWithRole, myRole?: Role, completedRoles?: CharGameRolePairing[] } = useLoaderData()
     const params = useParams()
     return (
         <Layout
@@ -93,7 +95,7 @@ export default function Games() {
 
                     <div className="w-full flex-grow-[2]">
 
-                        <div className="text-xl font-bold mb-3">{game?.status === 'ENLISTING' ? 'Recruits:' : 'Current Status:'}</div>
+                        <div className="text-xl font-bold mb-3">{game?.status === 'ENLISTING' ? 'Recruits:' : game?.status === 'ONGOING' ? 'Current Status:' : 'Results:'}</div>
                         {game?.participatingCharacters?.length !== 0 ? game?.participatingCharacters?.map((char: CharacterWithMods) => <Link to={char.id === registeredCharacter?.id ? `/gm-realm/${params.gameId}/dashboard` : `/gm-realm/characters/${char.id}`} className={`flex flex-row items-center py-3 ${char.id === registeredCharacter?.id ? "hover:shadow-xl hover:opacity-80" : ''}`} key={char.id}>
 
                             <CharacterAvatar
@@ -101,12 +103,17 @@ export default function Games() {
                                 size={char.id === registeredCharacter?.id ? 'MEDIUM' : 'SMALL'}
                             />
 
-                            <div className={`mx-4 flex flex-col text-lg font-semibold overflow-x-clip max-w-[50%]`}>
+                            {game.status === 'COMPLETED' ? <div className={`mx-4 flex flex-col text-lg font-semibold overflow-x-clip max-w-[50%]`}>
                                 <div>{char.name} {char.id === registeredCharacter?.id ? " - (YOU)" : ''}</div>
-                                {char.id === registeredCharacter?.id && myRole?.name && myRole?.alignment ? <div>
+                                <div>
+                                    {RoleAlignmentEmojis[completedRoles?.filter(role => role.characterId === char.id)[0].roleAlignment || 'TOWN']} {completedRoles?.filter(role => role.characterId === char.id)[0].roleName || 'UNKNOWN'} {RoleAlignmentEmojis[completedRoles?.filter(role => role.characterId === char.id)[0].roleAlignment || 'TOWN']}
+                                </div>
+                            </div> : <div className={`mx-4 flex flex-col text-lg font-semibold overflow-x-clip max-w-[50%]`}>
+                                <div>{char.name} {char.id === registeredCharacter?.id ? " - (YOU)" : ''}</div>
+                                {(char.id === registeredCharacter?.id && myRole?.name && myRole?.alignment) ? <div>
                                     {RoleAlignmentEmojis[myRole.alignment]} {myRole.name} {RoleAlignmentEmojis[myRole.alignment]}
                                 </div> : ''}
-                            </div>
+                            </div>}
 
                             <div className={char.id === registeredCharacter?.id ? 'text-2xl' : ''}>
                                 {currentPhase ? GameCharacterStatusEmojis?.[currentPhase?.characterStatus?.status?.filter(status => status.characterId === char.id)[0].status || 'ALIVE'] : GameCharacterStatusEmojis?.['ALIVE']}
@@ -117,7 +124,7 @@ export default function Games() {
                         </div>}
                     </div>
 
-                    {((game?.activeRoleIds.length === game?.playerCount) && roles) ? <div className="sm:w-2/3 border-t-2 border-t-licorice-600 sm:border-t-0 pt-5 sm:pt-0 sm:border-l-2 sm:border-l-licorice-600 sm:pl-5 flex-grow-[1]">
+                    {((game?.activeRoleIds.length === game?.playerCount) && roles && game?.status !== 'COMPLETED') ? <div className="sm:w-2/3 border-t-2 border-t-licorice-600 sm:border-t-0 pt-5 sm:pt-0 sm:border-l-2 sm:border-l-licorice-600 sm:pl-5 flex-grow-[1]">
                         <div className="text-xl font-bold mb-3">Active Roles:</div>
                         {game?.activeRoleIds?.map((roleId: string) => <Link to={`/gm-realm/roles/${roleId}`} className="flex flex-row items-center py-3" key={v4()}>
 

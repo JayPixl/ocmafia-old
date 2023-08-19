@@ -1,6 +1,6 @@
 import { AvatarColors, AvatarTypes } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
-import { useActionData, useLoaderData, useNavigate, useParams } from "@remix-run/react";
+import { useActionData, useLoaderData, useNavigate, useParams, useRevalidator } from "@remix-run/react";
 import { useRef, useState } from "react";
 import { ImageUploader } from "~/components/image-uploader";
 import InputField from "~/components/input-field";
@@ -36,6 +36,7 @@ export default function Edit() {
     const action = useActionData()
     const params = useParams()
     const navigate = useNavigate()
+    const revalidate = useRevalidator()
 
     const maxTaglineLength = 30
 
@@ -69,8 +70,8 @@ export default function Edit() {
         })
 
         const { image, error }: { image?: string, error?: string } = await result.json()
-        setFormData({ ...formData, avatarUrl: image })
         setLoading(l => false)
+        setFormData({ ...formData, avatarUrl: image })
     }
 
     return <Modal isOpen={true} onClick={() => navigate(`/profile/${params.userId}`)} className="w-2/3 md:w-1/3 h-96">
@@ -111,8 +112,8 @@ export default function Edit() {
                     display="Tagline"
                     maxLength={maxTaglineLength}
                 />
-                {<div className={`ml-3 mb-4 font-bold self-end ${formData.tagline.length > maxTaglineLength - 5 ? "text-cinnabar" : ''}`}>
-                    {maxTaglineLength - formData.tagline.length}
+                {<div className={`ml-3 mb-4 font-bold self-end ${formData?.tagline?.length > maxTaglineLength - 5 ? "text-cinnabar" : ''}`}>
+                    {maxTaglineLength - formData?.tagline?.length}
                 </div>}
             </div>
 

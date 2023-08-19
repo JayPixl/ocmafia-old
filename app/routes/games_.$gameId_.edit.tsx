@@ -93,6 +93,16 @@ export default function EditGame() {
                             </Link>
                         </div>
 
+                        <div className="flex flex-row items-end my-2">
+                            <div className="text-xl font-semibold">Game Awards: {game?.winnerCrowns}👑 {game?.winnerRubies}💎 / {game?.loserStrikes}❌ {game?.loserRubies}💎</div>
+                            <Link
+                                to={`/games/${params.gameId}/edit/awards`}
+                                className="italic text-base ml-3 underline hover:no-underline"
+                            >
+                                Edit
+                            </Link>
+                        </div>
+
                         <div className="flex flex-col my-2">
                             <div className="flex flex-row items-end mb-2">
                                 <div className="text-xl font-semibold">Hosts:</div>
