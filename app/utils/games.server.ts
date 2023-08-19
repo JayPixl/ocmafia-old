@@ -1227,6 +1227,28 @@ export const EndGame: (
         }
     })
 
+    const gameMessages = await prisma.eventMessages.findFirst({
+        where: {
+            gameId: game.id
+        }
+    })
+
+    const currentPhase = game.currentPhaseId ? await prisma.phase.update({
+        where: {
+            id: game.currentPhaseId
+        },
+        data: {
+            events: {
+                create: {
+                    draft: false,
+                    type: 'GAME_END',
+                    message: gameMessages?.messages.filter(message => message.event === 'GAME_END')[0].message || 'The Game is over!',
+                }
+            },
+            draft: false
+        }
+    }) : undefined
+
     return {
         newGame: await prisma.game.findUnique({ where: { id: gameId } }) as GameWithMods
     }
