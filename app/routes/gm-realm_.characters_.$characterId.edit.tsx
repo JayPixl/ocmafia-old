@@ -205,6 +205,7 @@ export default function EditCharacter() {
                         })}
                         display="Description"
                         error={actionData?.fieldErrors?.description}
+                        maxLength={200}
                     />
                     <InputField
                         type="text"

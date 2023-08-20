@@ -183,6 +183,7 @@ export default function CreateCharacter() {
                             })}
                             display="Description"
                             error={actionData?.fieldErrors?.description}
+                            maxLength={200}
                         />
                         <div className="flex flex-row w-full">
                             <div className="mx-2">
