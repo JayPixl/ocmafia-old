@@ -217,6 +217,7 @@ export default function EditCharacter() {
                         })}
                         display="Profile Link"
                         error={actionData?.fieldErrors?.link}
+                        maxLength={100}
                     />
 
                     <div className="w-full flex flex-col justify-center items-center">
@@ -307,6 +308,7 @@ export default function EditCharacter() {
                         })}
                         display="Special Ability Description"
                         error={actionData?.fieldErrors?.specialAbilityDescription}
+                        maxLength={200}
                     />
                     <button
                         type="submit"

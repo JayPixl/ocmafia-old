@@ -260,6 +260,7 @@ export default function CreateCharacter() {
                             })}
                             display="Special Ability Description"
                             error={actionData?.fieldErrors?.specialAbilityDescription}
+                            maxLength={200}
                         />
                         <div className="w-full flex justify-center items-center">
                             <button
