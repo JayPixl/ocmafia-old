@@ -21,9 +21,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 export const action: ActionFunction = async ({ request, params }) => {
     const form = await request.formData()
     const winnerCrowns = Number(form.get('winnerCrowns'))
+    const winnerRubies = Number(form.get('winnerRubies'))
+    const loserRubies = Number(form.get('loserRubies'))
     const loserStrikes = Number(form.get('loserStrikes'))
 
-    const { error, newGame } = await editGame({ winnerCrowns, loserStrikes }, params?.gameId || '')
+    const { error, newGame } = await editGame({ winnerCrowns, winnerRubies, loserRubies, loserStrikes }, params?.gameId || '')
     if (error) return json({ error })
     return redirect(`/games/${params.gameId}/edit`)
 }
