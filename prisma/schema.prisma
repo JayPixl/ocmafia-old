@@ -84,9 +84,9 @@ model Game {
   status   GameStatus?
 
   winnerCrowns Int
-  winnerRubies Int?
+  winnerRubies Int
   loserStrikes Int
-  loserRubies  Int?
+  loserRubies  Int
 
   pendingInviteIds String[]
   joinRequestIds   String[]

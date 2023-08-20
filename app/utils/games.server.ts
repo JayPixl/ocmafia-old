@@ -198,7 +198,9 @@ export const editGame: (
         location?: string,
         playerCount?: number,
         winnerCrowns?: number,
-        loserStrikes?: number
+        loserStrikes?: number,
+        winnerRubies?: number,
+        loserRubies?: number
     },
     gameId: string
 ) => Promise<{

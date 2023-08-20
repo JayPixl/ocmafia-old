@@ -8,8 +8,8 @@ async function main() {
                 id: game.id
             },
             data: {
-                winnerCrowns: 1,
-                loserStrikes: 1
+                winnerRubies: 1,
+                loserRubies: 1
             }
         })
         updates.push(update)
