@@ -14,7 +14,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return json({ user, role, error })
 }
 
-export default function Character() {
+export default function Role() {
     const { user, role, error } = useLoaderData<typeof loader>()
     const params = useParams()
     return (

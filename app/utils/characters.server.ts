@@ -11,6 +11,15 @@ export const getCharacterbyId: (
     const character = await prisma.character.findFirst({
         where: {
             id
+        },
+        include: {
+            owner: {
+                select: {
+                    id: true,
+                    username: true,
+                    avatar: true
+                }
+            }
         }
     })
     if (!character) return {

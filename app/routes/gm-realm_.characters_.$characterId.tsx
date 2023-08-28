@@ -2,6 +2,7 @@ import { LoaderFunction, json } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
 import CharacterAvatar from "~/components/character-avatar";
 import Layout from "~/components/layout";
+import UserCircle from "~/components/user-circle";
 import { getCharacterbyId } from "~/utils/characters.server";
 import { getUser } from "~/utils/users.server";
 
@@ -33,7 +34,26 @@ export default function Character() {
             <div>
                 {character ? (
                     <div className="flex justify-center items-center">
-                        <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8">
+                        <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8 relative">
+                            {character?.ownerId === user?.id ? <div className="absolute top-0 right-0">
+                                <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
+                                    Edit
+                                </Link>
+                            </div> : <Link
+                                to={`/profile/${character.ownerId}`}
+                                className="absolute top-3 right-3 flex flex-row items-center"
+                            >
+                                <UserCircle
+                                    username={character.owner.username}
+                                    avatarColor={character.owner.avatar.avatarColor}
+                                    avatarUrl={character.owner.avatar.avatarUrl}
+                                    avatarType={character.owner.avatar.avatarType}
+                                    size="SMALL"
+                                />
+                                <div className="ml-2 font-semibold">
+                                    {character.owner.username} →
+                                </div>
+                            </Link>}
                             <div className="flex w-full items-end justify-start border-b-2 border-licorice-800 pb-2">
                                 <CharacterAvatar
                                     avatarUrl={character.avatarUrl}
@@ -80,11 +100,6 @@ export default function Character() {
                                 <div className="text-2xl font-semibold">{character.specialAbility.name}</div>
                                 <div className="text-lg italic">{character.specialAbility.description}</div>
                             </div>
-                            {character?.ownerId === user?.id && <div>
-                                <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
-                                    Edit
-                                </Link>
-                            </div>}
                         </div>
                     </div>
 

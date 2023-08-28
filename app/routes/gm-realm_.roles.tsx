@@ -52,6 +52,9 @@ export default function Characters() {
             navArray={[{ name: "Grandmaster's Realm", id: "gm-realm", url: "/gm-realm" }, { name: "Roles", id: "roles", url: "/gm-realm/roles", parent: "gm-realm" }]}
         >
             <div className="p-8 flex flex-col items-center w-full">
+                <div className="my-3 w-full text-right font-lg">
+                    <Link to={`/gm-realm/roles/all`}>All Roles →</Link>
+                </div>
                 <div className="text-center text-4xl font-semibold">Roles</div>
                 <input
                     className="max-w-[30rem] w-[20rem] px-3 py-2 text-xl text-licorice-800 m-5 rounded-full"

@@ -5,6 +5,7 @@ import { v4 } from "uuid";
 import CharacterAvatar from "~/components/character-avatar";
 import Layout from "~/components/layout";
 import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constants";
+import { formatCase } from "~/utils/formatters";
 import { getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
 import { getMyCharacterGameProfile } from "~/utils/roles.server";
@@ -27,23 +28,75 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         }
     }) : undefined)
 
-    const roles = (await prisma.role.findMany({
+    let roles = {
+        TOWN: 0,
+        MAFIA: 0,
+        NEUTRAL: 0,
+        HOSTILE: 0
+    };
+
+    (((await prisma.gameRoles.findUnique({
+        where: {
+            gameId: game.id
+        },
         select: {
-            id: true,
-            name: true,
-            alignment: true
+            assignedRoles: {
+                select: {
+                    roleAlignment: true
+                }
+            }
         }
-    })) as Role[]
+    }))?.assignedRoles)?.map(roleAlignment => {
+        return roleAlignment.roleAlignment
+    }))?.map(alignment => {
+        roles = {
+            ...roles,
+            [alignment]: roles?.[alignment] + 1
+        }
+    })
 
     const { character, myRole } = user?.id ? await getMyCharacterGameProfile(user.id, game.id) : { character: undefined, myRole: undefined }
 
     const completedRoles = (game.status === 'COMPLETED' ? (await prisma.gameRoles.findUnique({ where: { gameId: game.id } }))?.assignedRoles : undefined)
 
-    return json({ user, game, authorized, currentPhase, roles, registeredCharacter: character, myRole, completedRoles })
+    return json({
+        user,
+        game,
+        authorized,
+        currentPhase,
+        roles,
+        registeredCharacter: character,
+        myRole,
+        completedRoles
+    })
 }
 
 export default function Games() {
-    const { user, game, authorized, currentPhase, roles, registeredCharacter, myRole, completedRoles }: { user?: UserWithMods, game?: GameWithMods, authorized?: boolean, currentPhase?: PhaseWithMods, roles?: { id: string, name: string, alignment: Alignment }[], registeredCharacter?: CharacterWithRole, myRole?: Role, completedRoles?: CharGameRolePairing[] } = useLoaderData()
+    const {
+        user,
+        game,
+        authorized,
+        currentPhase,
+        roles,
+        registeredCharacter,
+        myRole,
+        completedRoles
+    }: {
+        user?: UserWithMods,
+        game?: GameWithMods,
+        authorized?: boolean,
+        currentPhase?: PhaseWithMods,
+        roles?: {
+            TOWN: number,
+            MAFIA: number,
+            NEUTRAL: number,
+            HOSTILE: number
+        },
+        registeredCharacter?: CharacterWithRole,
+        myRole?: Role,
+        completedRoles?: CharGameRolePairing[]
+    } = useLoaderData()
+
     const params = useParams()
     return (
         <Layout
@@ -126,21 +179,24 @@ export default function Games() {
 
                     {((game?.activeRoleIds.length === game?.playerCount) && roles && game?.status !== 'COMPLETED') ? <div className="sm:w-2/3 border-t-2 border-t-licorice-600 sm:border-t-0 pt-5 sm:pt-0 sm:border-l-2 sm:border-l-licorice-600 sm:pl-5 flex-grow-[1]">
                         <div className="text-xl font-bold mb-3">Active Roles:</div>
-                        {game?.activeRoleIds?.map((roleId: string) => <Link to={`/gm-realm/roles/${roleId}`} className="flex flex-row items-center py-3" key={v4()}>
+                        {Object.values(roles).map((number, index) => {
+                            if (number !== 0) return <div className="flex flex-row items-center py-3" key={v4()}>
 
-                            <div>
-                                {RoleAlignmentEmojis[roles?.filter(role => role.id === roleId)[0].alignment]}
+                                <div>
+                                    {RoleAlignmentEmojis[Object.keys(roles)[index]]}
+                                </div>
+
+                                <div className="mx-4 font-bold text-lg">
+                                    {formatCase(Object.keys(roles)[index])} - {number}
+                                </div>
+
+                                <div>
+                                    {RoleAlignmentEmojis[Object.keys(roles)[index]]}
+                                </div>
+
                             </div>
-
-                            <div className="mx-4 font-bold text-lg">
-                                {roles?.filter(role => role.id === roleId)[0].name}
-                            </div>
-
-                            <div>
-                                {RoleAlignmentEmojis[roles?.filter(role => role.id === roleId)[0].alignment]}
-                            </div>
-
-                        </Link>)}
+                        }
+                        )}
                     </div> : ''}
 
                 </div>
