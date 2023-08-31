@@ -13,11 +13,17 @@ import { validateLength } from "~/utils/validators";
 export const loader: LoaderFunction = async ({ request, params }) => {
     const { user } = await getUser(request)
 
+    console.log(user?.username)
+
     const { authorized } = await requireHost(request, params.gameId || '')
     if (!authorized) return redirect(`/games/${params.gameId}/reports`)
 
+    console.log(authorized)
+
     const { game, currentPhase } = await getGameById(params.gameId || '')
     if (!game) return redirect('/games')
+
+    console.log(game.name)
 
     let characters: { name: string, id: string }[] = []
     const moddedGame: GameWithMods = game as GameWithMods
@@ -27,6 +33,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
             id: char.id
         })
     })
+
+    console.log(characters.map(char => char.name))
 
     return json({ user, game, authorized, currentPhase, characters })
 }
