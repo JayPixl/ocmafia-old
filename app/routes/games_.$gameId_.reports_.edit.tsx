@@ -13,6 +13,8 @@ import { validateLength } from "~/utils/validators";
 export const loader: LoaderFunction = async ({ request, params }) => {
     const { user } = await getUser(request)
 
+    console.log(`START TIME: ${Date.now()}`)
+
     console.log(user?.username)
 
     const { authorized } = await requireHost(request, params.gameId || '')
@@ -35,6 +37,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     })
 
     console.log(characters.map(char => char.name))
+
+    console.log(`END TIME: ${Date.now()}`)
 
     return json({ user, game, authorized, currentPhase, characters })
 }
