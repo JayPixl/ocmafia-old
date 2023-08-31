@@ -68,7 +68,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function EditGameCharacters() {
-    const { user, game, admin, joinRequests, pendingInvites }: { user?: User, game?: GameWithMods, admin?: boolean, joinRequests?: CharacterWithMods[], pendingInvites?: CharacterWithMods[] } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, game, admin, joinRequests, pendingInvites }: { user?: User, game?: GameWithMods, admin?: boolean, joinRequests?: CharacterWithMods[], pendingInvites?: CharacterWithMods[] } = loaderData
     const action = useActionData()
     const fetcher = useFetcher()
 

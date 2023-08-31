@@ -39,7 +39,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function JoinGame() {
-    const { user, game, eligibleCharacters }: { user?: UserWithMods, game?: GameWithMods, eligibleCharacters?: CharacterWithMods[] } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, game, eligibleCharacters }: { user?: UserWithMods, game?: GameWithMods, eligibleCharacters?: CharacterWithMods[] } = loaderData
     const params = useParams()
 
     return (

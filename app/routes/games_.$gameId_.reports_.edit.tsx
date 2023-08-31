@@ -84,13 +84,13 @@ export const action: ActionFunction = async ({ request, params }) => {
             fieldErrors,
         })
     }
-
     const { error } = await manageReports(params.gameId || '', action, fields)
     if (error) return json({ error, fields })
     return json({ fields: { phaseId } })
 }
 
 export default function EditReports() {
+    const loaderData = useLoaderData()
     const {
         user,
         game,
@@ -101,7 +101,7 @@ export default function EditReports() {
         game?: GameWithMods,
         currentPhase?: PhaseWithMods,
         characters?: { name: string, id: string }[]
-    } = useLoaderData()
+    } = loaderData
 
     const actionData = useActionData()
     const params = useParams()

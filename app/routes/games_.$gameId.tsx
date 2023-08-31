@@ -72,6 +72,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 }
 
 export default function Games() {
+    const loaderData = useLoaderData()
     const {
         user,
         game,
@@ -95,7 +96,7 @@ export default function Games() {
         registeredCharacter?: CharacterWithRole,
         myRole?: Role,
         completedRoles?: CharGameRolePairing[]
-    } = useLoaderData()
+    } = loaderData
 
     const params = useParams()
     return (

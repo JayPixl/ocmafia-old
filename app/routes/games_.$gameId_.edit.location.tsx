@@ -28,7 +28,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function EditGameLocation() {
-    const { user, game, admin }: { user?: User, game?: GameWithMods, admin?: boolean } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, game, admin }: { user?: User, game?: GameWithMods, admin?: boolean } = loaderData
     const action = useActionData()
 
     const navigate = useNavigate()

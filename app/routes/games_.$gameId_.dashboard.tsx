@@ -113,6 +113,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function Dashboard() {
+    const loaderData = useLoaderData()
     const {
         user,
         game,
@@ -129,7 +130,7 @@ export default function Dashboard() {
         myRole?: RoleWithNotes,
         actions?: { type: ActionType, id?: string, selected?: string, selectedStrategy?: string, options: { name: string, value: string }[] }[],
         actionPhaseId?: string
-    } = useLoaderData()
+    } = loaderData
     const params = useParams()
     const action = useActionData()
 

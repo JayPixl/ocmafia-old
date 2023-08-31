@@ -27,7 +27,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 }
 
 export default function EditGame() {
-    const { user, game, admin, assignedRoles }: { user?: User, game?: GameWithMods, admin?: boolean, assignedRoles?: GameRoles } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, game, admin, assignedRoles }: { user?: User, game?: GameWithMods, admin?: boolean, assignedRoles?: GameRoles } = loaderData
     const params = useParams()
     const navigatate = useNavigate()
     const [confirmation, setConfirmation] = useState<any>(null)

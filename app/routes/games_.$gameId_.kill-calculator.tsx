@@ -7,7 +7,7 @@ import Layout from "~/components/layout";
 import { effectivenessDice, effectivenessResult } from "~/utils/constants";
 import { getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
-import { CharacterWithMods, GameWithMods } from "~/utils/types";
+import { CharacterWithMods, GameWithMods, UserWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -29,7 +29,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 }
 
 export default function KillCalculator() {
-    const { user, game, characters }: { user?: User, game?: GameWithMods, characters?: CharacterWithMods[] } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, game, characters }: { user?: UserWithMods, game?: GameWithMods, characters?: CharacterWithMods[] } = loaderData
     const params = useParams()
 
     const [inputs, setInputs] = useState({

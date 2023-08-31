@@ -32,7 +32,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function EditGameMessages() {
-    const { user, game }: { user?: User, game?: GameWithMods } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, game }: { user?: User, game?: GameWithMods } = loaderData
     const action = useActionData()
     const navigate = useNavigate()
 
