@@ -13,19 +13,11 @@ import { validateLength } from "~/utils/validators";
 export const loader: LoaderFunction = async ({ request, params }) => {
     const { user } = await getUser(request)
 
-    console.log(`START TIME: ${Date.now()}`)
-
-    console.log(user?.username)
-
     const { authorized } = await requireHost(request, params.gameId || '')
     if (!authorized) return redirect(`/games/${params.gameId}/reports`)
 
-    console.log(authorized)
-
     const { game, currentPhase } = await getGameById(params.gameId || '')
     if (!game) return redirect('/games')
-
-    console.log(game.name)
 
     let characters: { name: string, id: string }[] = []
     const moddedGame: GameWithMods = game as GameWithMods
@@ -35,10 +27,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
             id: char.id
         })
     })
-
-    console.log(characters.map(char => char.name))
-
-    console.log(`END TIME: ${Date.now()}`)
 
     return json({ user, game, authorized, currentPhase, characters })
 }
@@ -253,6 +241,8 @@ export default function EditReports() {
 
                 <form method="POST" className="flex flex-col items-start py-5 border-b-2 border-b-licorice-800">
                     <input type="hidden" name="phaseId" value={inputs.phaseId} />
+
+                    {JSON.stringify(inputs)}
 
                     <div className="self-center text-3xl font-semibold text-neonblue mb-3">New Event</div>
 
