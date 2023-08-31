@@ -1,4 +1,4 @@
-import { Alignment, AvatarColors, Clearance } from "@prisma/client"
+import { ActionType, Alignment, AvatarColors, CharacterStatus, Clearance, GameCharacterStatus, GameStatus, PhaseCharacterGameStatus, Role } from "@prisma/client"
 
 export const clearanceMap: {
     [index: string]: Clearance[]

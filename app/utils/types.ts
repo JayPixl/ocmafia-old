@@ -47,3 +47,18 @@ export interface ExtendedInboxItem extends InboxItem {
     avatar?: Avatar,
     senderUsername: string
 }
+
+export enum actionTargets {
+    "LIVING_CHAR_NOT_IN_FACTION",
+    "LIVING_CHAR_IN_FACTION",
+    "LIVING_OTHER_CHAR",
+    "LIVING_ANY_CHAR",
+    "DEAD_CHAR_NOT_IN_FACTION",
+    "DEAD_CHAR_IN_FACTION",
+    "DEAD_OTHER_CHAR",
+    "DEAD_ANY_CHAR",
+    "ANY_CHAR_NOT_IN_FACTION",
+    "ANY_CHAR_IN_FACTION",
+    "ANY_OTHER_CHAR",
+    "ANY_CHAR",
+}

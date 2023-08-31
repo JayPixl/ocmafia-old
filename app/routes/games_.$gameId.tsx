@@ -148,6 +148,8 @@ export default function Games() {
 
                     <div className="w-full flex-grow-[2]">
 
+                        {game?.status === 'ONGOING' && currentPhase ? <div className="text-3xl font-bold my-3">{currentPhase?.time === "DAY" ? "Night" : "Day"} {currentPhase?.time === "DAY" ? currentPhase.dayNumber : currentPhase?.dayNumber + 1} ~</div> : ''}
+
                         <div className="text-xl font-bold mb-3">{game?.status === 'ENLISTING' ? 'Recruits:' : game?.status === 'ONGOING' ? 'Current Status:' : 'Results:'}</div>
                         {game?.participatingCharacters?.length !== 0 ? game?.participatingCharacters?.map((char: CharacterWithMods) => <Link to={char.id === registeredCharacter?.id ? `/gm-realm/${params.gameId}/dashboard` : `/gm-realm/characters/${char.id}`} className={`flex flex-row items-center py-3 ${char.id === registeredCharacter?.id ? "hover:shadow-xl hover:opacity-80" : ''}`} key={char.id}>
 

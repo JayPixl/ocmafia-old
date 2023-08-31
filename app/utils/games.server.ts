@@ -1,4 +1,4 @@
-import { Alignment, EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time } from "@prisma/client"
+import { ActionType, Alignment, EventTypes, Game, GameCharacterStatus, Phase, Prisma, Time } from "@prisma/client"
 import { prisma } from "./prisma.server"
 import { requireClearance } from "./users.server"
 import { CharacterWithMods, GameWithMods, PhaseWithMods } from "./types"
@@ -692,6 +692,11 @@ export const manageReports: (
                         create: {
                             status: oldStatus
                         }
+                    },
+                    actions: {
+                        create: {
+
+                        }
                     }
                 }
             })
@@ -701,6 +706,7 @@ export const manageReports: (
             }
 
             if (game.status === 'ENLISTING') await startGame(game.id)
+            else game.participatingCharacterIds.map(async id => await sendMessage(process.env.OCM_OFFICIAL_ID || '', id, `A  new report has been published in ${game.name}!`, "PHASE_PUBLISHED", `/games/${game.id}`))
 
             break
         }
@@ -1313,5 +1319,92 @@ export const EndGame: (
 
     return {
         newGame: await prisma.game.findUnique({ where: { id: gameId } }) as GameWithMods
+    }
+}
+
+export const editActions: (
+    characterId: string,
+    phaseId: string,
+    characterActions: {
+        actionType: ActionType,
+        actionId?: string,
+        actionTargetId?: string,
+        actionStrategy?: string,
+    }[]
+) => Promise<{
+    error?: string,
+    success?: string
+}> = async (characterId, phaseId, characterActions) => {
+    const character = await prisma.character.findUnique({
+        where: {
+            id: characterId
+        }
+    })
+
+    if (!character) return {
+        error: "Could not find character"
+    }
+
+    const phase = await prisma.phase.findUnique({
+        where: {
+            id: phaseId
+        }
+    })
+
+    if (!phase) return {
+        error: "Could not find phase"
+    }
+
+    const gameRoles = await prisma.gameRoles.findUnique({
+        where: {
+            gameId: phase.gameId
+        }
+    })
+
+    if (!gameRoles) return {
+        error: "Could not find game roles"
+    }
+
+    const actions = await prisma.phaseActions.findUnique({
+        where: {
+            phaseId
+        }
+    })
+
+    if (!actions) return {
+        error: "Could not find actions model"
+    }
+
+    const query: Prisma.PhaseCharacterActionsListUpdateEnvelopeInput = {
+        set: [
+            ...actions.actions.filter(actionPairing => !(characterActions.map(action => action.actionId).includes(actionPairing.actionId))),
+            ...(characterActions.map(action => {
+                return {
+                    characterId: character.id,
+                    characterName: character.name,
+                    characterRoleId: gameRoles.assignedRoles.filter(rolePairing => rolePairing.characterId === character.id)[0].roleId,
+                    ...action
+                }
+            }))
+        ]
+    }
+
+    const result = await prisma.phaseActions.update({
+        where: {
+            id: actions.id
+        },
+        data: {
+            actions: {
+                ...query
+            }
+        }
+    })
+
+    if (!result) return {
+        error: "Could not update action..."
+    }
+
+    return {
+        success: "Action updated successfully!"
     }
 }

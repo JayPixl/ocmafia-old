@@ -1,4 +1,4 @@
-import { Alignment, Role } from "@prisma/client";
+import { ActionType, Alignment, Role } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -29,18 +29,44 @@ export const action: ActionFunction = async ({ request }) => {
     const alignment = form.get('alignment') as Alignment
     const id = form.get('_action') as string
 
+    let i: number = 0
+    let dayActions: ActionType[] = []
+    let nightActions: ActionType[] = []
+
+    while (true) {
+        const dayAction = form.get(`dayActions[${i}]`) as ActionType
+        if (dayAction) {
+            dayActions.push(dayAction)
+            i++
+        } else {
+            break
+        }
+    }
+
+    i = 0
+
+    while (true) {
+        const nightAction = form.get(`nightActions[${i}]`) as ActionType
+        if (nightAction) {
+            nightActions.push(nightAction)
+            i++
+        } else {
+            break
+        }
+    }
+
     if (typeof name !== 'string' || typeof description !== 'string') return json({ error: "Invalid form data" }, { status: 500 })
 
     let errors = {
         name: name.length > 20 && 'Name of role cannot be longer than 20 characters',
-        description: description.length > 200 && 'Name of description cannot be longer than 200 characters'
+        description: description.length > 1000 && 'Name of description cannot be longer than 1000 characters'
     }
 
     if (Object.values(errors).some(Boolean)) {
         return json({ errors, fields: { name, description, alignment } }, { status: 404 })
     }
 
-    const { newRole, error } = await manageRoles({ name, description, alignment, id }, 'edit')
+    const { newRole, error } = await manageRoles({ name, description, alignment, id, dayActions, nightActions }, 'edit')
     if (error) return json({ error, fields: { name, description, alignment } })
 
     return json({ newRole })
@@ -50,10 +76,22 @@ export default function EditRole() {
     const { user, role } = useLoaderData()
     const action = useActionData()
 
-    const [inputs, setInputs] = useState({
+    const [inputs, setInputs] = useState<{
+        name: string,
+        description: string,
+        alignment: Alignment,
+        dayActionSelect: string,
+        dayActions: string[],
+        nightActionSelect: string,
+        nightActions: string[]
+    }>({
         name: action?.fields?.name || role.name || '',
         description: action?.fields?.description || role.description || '',
-        alignment: (action?.fields?.alignment || role.alignment || 'TOWN') as Alignment
+        alignment: (action?.fields?.alignment || role.alignment || 'TOWN') as Alignment,
+        dayActionSelect: 'VOTE',
+        dayActions: action?.fields?.dayActions || role.dayActions || [],
+        nightActionSelect: 'VOTE',
+        nightActions: action?.fields?.nightActions || role.nightActions || []
     })
     return <Layout user={user} navigation={true}>
         <div className="p-5 w-full flex flex-col items-center">
@@ -98,6 +136,86 @@ export default function EditRole() {
                                 {alignment}
                             </option>)}
                         </select>
+                    </div>
+
+                    <div className="bg-dogwood rounded-lg text-licorice-800 p-3 my-3">
+                        <div className="text-xl">Day Actions</div>
+
+                        {inputs.dayActions.length !== 0 ? inputs.dayActions?.map((value: string, index: number) => <div className="text-lg font-semibold italic ml-3 py-2" key={value}>
+                            <input type="hidden" name={`dayActions[${index}]`} value={value} />
+                            {value} <span className="ml-2 cursor-pointer font-bold px-2 rounded-full bg-bittersweet" onClick={e => setInputs({ ...inputs, dayActions: [...(inputs.dayActions.filter((action: string) => action !== value))] })}>-</span>
+                        </div>) : <div className="text-lg font-semibold italic ml-3 py-2">
+                            - None
+                        </div>}
+
+                        <div className="border-b-licorice-800 border-b-2 w-full" />
+                        <div className="flex flex-row items-baseline">
+                            <select
+                                value={inputs.dayActionSelect}
+                                onChange={e => setInputs({
+                                    ...inputs,
+                                    dayActionSelect: e.target.value as string
+                                })}
+                                className="bg-opacity-[1%] bg-licorice-600 font-bold text-lg rounded-lg py-1 hover:opacity-80"
+                            >
+                                {Object.values(ActionType).map(actionType => <option key={actionType} value={actionType}>
+                                    {actionType}
+                                </option>)}
+                            </select>
+                            <div
+                                className="text-lg underline hover:no-underline p-2 cursor-pointer"
+                                onClick={e => {
+                                    setInputs({
+                                        ...inputs,
+                                        dayActions: [
+                                            ...inputs.dayActions,
+                                            inputs.dayActionSelect as string
+                                        ]
+                                    })
+                                }}>
+                                Add
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-dogwood rounded-lg text-licorice-800 p-3 my-3">
+                        <div className="text-xl">Night Actions</div>
+
+                        {inputs.nightActions.length !== 0 ? inputs.nightActions?.map((value: string, index: number) => <div className="text-lg font-semibold italic ml-3 py-2" key={value}>
+                            <input type="hidden" name={`nightActions[${index}]`} value={value} />
+                            {value} <span className="ml-2 cursor-pointer font-bold px-2 rounded-full bg-bittersweet" onClick={e => setInputs({ ...inputs, nightActions: [...(inputs.nightActions.filter((action: string) => action !== value))] })}>-</span>
+                        </div>) : <div className="text-lg font-semibold italic ml-3 py-2">
+                            - None
+                        </div>}
+
+                        <div className="border-b-licorice-800 border-b-2 w-full" />
+                        <div className="flex flex-row items-baseline">
+                            <select
+                                value={inputs.nightActionSelect}
+                                onChange={e => setInputs({
+                                    ...inputs,
+                                    nightActionSelect: e.target.value as string
+                                })}
+                                className="bg-opacity-[1%] bg-licorice-600 font-bold text-lg rounded-lg py-1 hover:opacity-80"
+                            >
+                                {Object.values(ActionType).map(actionType => <option key={actionType} value={actionType}>
+                                    {actionType}
+                                </option>)}
+                            </select>
+                            <div
+                                className="text-lg underline hover:no-underline p-2 cursor-pointer"
+                                onClick={e => {
+                                    setInputs({
+                                        ...inputs,
+                                        nightActions: [
+                                            ...inputs.nightActions,
+                                            inputs.nightActionSelect as string
+                                        ]
+                                    })
+                                }}>
+                                Add
+                            </div>
+                        </div>
                     </div>
 
                     <button

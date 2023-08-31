@@ -1,4 +1,4 @@
-import { Alignment, Game, Role, User } from "@prisma/client";
+import { ActionType, Alignment, Game, GameCharacterStatus, Role, User } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react";
 import { useState } from "react";
@@ -6,9 +6,9 @@ import { v4 } from "uuid";
 import CharacterAvatar from "~/components/character-avatar";
 import Layout from "~/components/layout";
 import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constants";
-import { getGameById, requireHost } from "~/utils/games.server";
+import { editActions, getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
-import { getMyCharacterGameProfile } from "~/utils/roles.server";
+import { getActionOptions, getMyCharacterGameProfile } from "~/utils/roles.server";
 import { CharacterWithMods, CharacterWithRole, EventWithMods, GameWithMods, PhaseWithMods, RoleWithNotes, UserWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
@@ -30,50 +30,111 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     const { character, myRole } = user?.id ? await getMyCharacterGameProfile(user.id, game.id) : { character: undefined, myRole: undefined }
 
-    return json({ user, game, currentPhase, character, myRole })
+    if (!character) return redirect(`/games/${params.gameId}`)
+
+    const { actions, actionPhaseId } = await getActionOptions(game.id, character.id)
+
+    return json({ user, game, currentPhase, character, myRole, actions, actionPhaseId })
 }
 
 export const action: ActionFunction = async ({ request, params }) => {
     const form = await request.formData()
-    const notes = form.get('notes') as string
-    const characterId = form.get('_action') as string
+    const method = form.get('method') as 'notes' | 'actions'
 
-    if (!characterId) return json({
-        error: "Could not find character Id..."
-    })
 
-    if (notes.length > 1000) return json({
-        error: "Notes cannot be longer than 1000 characters long"
-    })
+    switch (method) {
 
-    const result = await prisma.gameRoles.update({
-        where: {
-            gameId: params.gameId!
-        },
-        data: {
-            assignedRoles: {
-                updateMany: {
-                    where: {
-                        characterId
-                    },
-                    data: {
-                        notes
-                    }
+        case "actions": {
+            const characterId = form.get('characterId') as string
+            const phaseId = form.get('phaseId') as string
+
+            let i: number = 0
+            let actions: { actionType: ActionType, actionId?: string, actionTargetId: string, actionStrategy?: string }[] = []
+
+            while (true) {
+                const actionType = form.get(`actionType[${i}]`) as ActionType
+                const actionTargetId = form.get(`action[${i}]`) as string
+                const actionStrategy = form.get(`actionStrategy[${i}]`) as string
+                const actionId = form.get(`actionId[${i}]`) as string
+                if (actionType) {
+                    actions.push({
+                        actionType,
+                        actionTargetId,
+                        actionStrategy,
+                        actionId: actionId ? actionId : undefined
+                    })
+                    i++
+                } else {
+                    break
                 }
             }
-        }
-    })
 
-    return null
+            const { error } = await editActions(characterId, phaseId, actions)
+
+
+            return null
+        }
+
+        case "notes": {
+
+            const notes = form.get('notes') as string
+            const characterId = form.get('_action') as string
+
+            if (!characterId) return json({
+                error: "Could not find character Id..."
+            })
+
+            if (notes.length > 1000) return json({
+                error: "Notes cannot be longer than 1000 characters long"
+            })
+
+            const result = await prisma.gameRoles.update({
+                where: {
+                    gameId: params.gameId!
+                },
+                data: {
+                    assignedRoles: {
+                        updateMany: {
+                            where: {
+                                characterId
+                            },
+                            data: {
+                                notes
+                            }
+                        }
+                    }
+                }
+            })
+
+            return null
+
+        }
+    }
 }
 
 export default function Dashboard() {
-    const { user, game, currentPhase, character, myRole }: { user?: UserWithMods, game?: GameWithMods, currentPhase?: PhaseWithMods, character?: CharacterWithRole, myRole?: RoleWithNotes } = useLoaderData()
+    const {
+        user,
+        game,
+        currentPhase,
+        character,
+        myRole,
+        actions,
+        actionPhaseId
+    }: {
+        user?: UserWithMods,
+        game?: GameWithMods,
+        currentPhase?: PhaseWithMods,
+        character?: CharacterWithRole,
+        myRole?: RoleWithNotes,
+        actions?: { type: ActionType, id?: string, selected?: string, selectedStrategy?: string, options: { name: string, value: string }[] }[],
+        actionPhaseId?: string
+    } = useLoaderData()
     const params = useParams()
     const action = useActionData()
 
-    const [editingNotes, setEditingNotes] = useState(false)
     const [inputs, setInputs] = useState({ notes: myRole?.notes || '' })
+    const [actionsInput, setActionsInput] = useState(actions)
 
     return (
         <Layout
@@ -124,6 +185,62 @@ export default function Dashboard() {
 
                         <div className="my-5 border-b-2 border-b-licorice-600 w-full" />
 
+                        <form method="POST" className="flex flex-col justify-center items-center">
+
+                            <input type="hidden" name="method" value="actions" />
+                            <input type="hidden" name="characterId" value={character?.id} />
+                            <input type="hidden" name="phaseId" value={actionPhaseId} />
+
+                            {game?.status === 'ONGOING' && currentPhase ? <div className="text-3xl font-bold my-3">{currentPhase?.time === "DAY" ? "Night" : "Day"} {currentPhase?.time === "DAY" ? currentPhase.dayNumber : currentPhase?.dayNumber + 1} Actions</div> : ''}
+
+                            <div className="flex flex-row justify-center items-center">
+
+                                {actionsInput?.map((action, index) => <div key={v4()} className="flex flex-col justify-center mx-5">
+
+                                    <input type="hidden" name={`actionType[${index}]`} value={action.type} />
+                                    <input type="hidden" name={`actionStrategy[${index}]`} value={action.selectedStrategy} />
+                                    <input type="hidden" name={`actionId[${index}]`} value={action?.id} />
+
+                                    <div className="text-xl my-3 text-center">{action.type}</div>
+
+                                    <select
+                                        name={`action[${index}]`}
+                                        value={actionsInput[index]?.selected || "No Action"}
+                                        onChange={e => setActionsInput(actionsInput.map(input => input.type === action.type ? { ...input, selected: e.target.value } : input))}
+                                        className="my-2 rounded-lg bg-slate-100 text-lg"
+                                    >
+                                        {action.options.map(option => <option key={option.value} value={option.value}>
+                                            {option.name}
+                                        </option>)}
+                                    </select>
+
+                                    {["MAFIA_KILL", "INDEPENDENT_KILL"].includes(action.type) ? <select
+                                        value={actionsInput[index]?.selectedStrategy || "STRENGTH"}
+                                        onChange={e => setActionsInput(actionsInput.map(input => input.type === action.type ? { ...input, selectedStrategy: e.target.value } : input))}
+                                        className="my-2"
+                                    >
+                                        {["STRENGTH", "STEALTH", "SKILL", "CHARISMA"].map(stat => <option key={v4()} value={stat}>
+                                            {stat.substring(0, 3)}
+                                        </option>)}
+                                    </select> : ""}
+
+                                </div>)}
+
+                                {actionsInput?.length === 0 ? <div className="text-xl my-3 text-center">
+                                    No Actions!
+                                </div> : ""}
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="text-neonblue px-1 border rounded-xl border-neonblue hover:text-white hover:bg-neonblue font-bold text-xl my-2"
+                            >
+                                Save
+                            </button>
+
+                        </form>
+
                         <div className="flex flex-col self-start items-start w-full">
 
                             <div className="py-2">
@@ -147,6 +264,7 @@ export default function Dashboard() {
                                 <span className="font-bold text-lg">Notes: </span>
 
                                 <form method="POST" className="flex flex-col justify-center items-center">
+                                    <input type="hidden" name="method" value="notes" />
                                     <textarea
                                         name="notes"
                                         value={inputs.notes}

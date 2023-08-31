@@ -124,8 +124,18 @@ model Phase {
   gameId          String                    @db.ObjectId
   events          Event[]                   @relation("PhaseEvents")
   characterStatus PhaseCharacterGameStatus? @relation("PhaseGameCharacterStatus")
+  actions         PhaseActions?             @relation("GamePhaseActions")
 
   @@unique([time, dayNumber, gameId])
+}
+
+model PhaseActions {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  actions PhaseCharacterActions[]
+
+  phase   Phase  @relation(fields: [phaseId], references: [id], onDelete: Cascade, "GamePhaseActions")
+  phaseId String @unique @db.ObjectId
 }
 
 model Event {
@@ -155,6 +165,11 @@ model Role {
   alignment   Alignment
   description String
   imageUrl    String?
+  meetings    Alignment[]
+  disguise    Alignment?
+
+  dayActions   ActionType[]
+  nightActions ActionType[]
 }
 
 model EventMessages {
@@ -186,6 +201,16 @@ type CharGameStatusPairing {
   characterId   String              @db.ObjectId
   characterName String
   status        GameCharacterStatus
+}
+
+type PhaseCharacterActions {
+  characterId     String     @db.ObjectId
+  characterName   String
+  characterRoleId String     @db.ObjectId
+  actionId        String     @default(uuid())
+  actionType      ActionType
+  actionTargetId  String?
+  actionStrategy  String?
 }
 
 type CharGameRolePairing {
@@ -298,4 +323,12 @@ enum MessageTypes {
   PHASE_PUBLISHED
   GAME_COMPLETED
   NEW_FOLLOWER
+}
+
+enum ActionType {
+  VOTE
+  MAFIA_KILL
+  INDEPENDENT_KILL
+  INVESTIGATE
+  ANGEL_PROTECT
 }

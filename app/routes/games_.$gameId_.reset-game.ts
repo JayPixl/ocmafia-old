@@ -62,6 +62,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
                                 message: moddedGame?.gameMessages?.messages.filter(message => message.event === 'GAME_START')[0].message || 'Welcome, players! The Game begins now...',
                                 type: 'GAME_START'
                             }
+                        },
+                        actions: {
+                            create: {
+
+                            }
                         }
                     }
                 })
