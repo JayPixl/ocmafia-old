@@ -107,8 +107,6 @@ export default function EditReports() {
     const actionData = useActionData()
     const params = useParams()
 
-    const [loading, setLoading] = useState(true)
-
     const [selectedPhase, setSelectedPhase] = useState<PhaseWithMods | undefined>(undefined)
     let eventsObj: object = {}
 
@@ -164,7 +162,6 @@ export default function EditReports() {
     }, [inputs.phaseId])
 
     useEffect(() => {
-        setLoading(false)
         setSelectedPhase(game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0] || currentPhase ? currentPhase : game?.phases?.filter(phase => true)[0] || undefined)
         setInputs({
             ...inputs,
@@ -226,15 +223,12 @@ export default function EditReports() {
                         <input type="hidden" name="phaseId" value={inputs.phaseId} />
 
                         <button
-                            disabled={loading}
                             type="submit"
                             name="_action"
                             value={selectedPhase?.events?.length && selectedPhase?.events?.every(val => val.draft === false) ? 'unpublishPhase' : 'publishPhase'}
                             className="mr-5 text-xl border-[1px] border-dogwood text-dogwood rounded-lg py-1 px-2 hover:bg-bittersweet hover:border-bittersweet hover:text-white transition md:text-2xl"
                         >
-                            {loading === true ?
-                                <div className="h-8 w-8 border-transparent border-t-dogwood border-4 animate-spin rounded-full" />
-                                : selectedPhase?.events?.length && selectedPhase?.events?.every(val => val.draft === false) ? 'Unpublish Phase' : 'Publish Phase'}
+                            {selectedPhase?.events?.length && selectedPhase?.events?.every(val => val.draft === false) ? 'Unpublish Phase' : 'Publish Phase'}
                         </button>
 
                         <Link
