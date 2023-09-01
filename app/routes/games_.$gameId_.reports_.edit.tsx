@@ -106,7 +106,7 @@ export default function EditReports() {
     const actionData = useActionData()
     const params = useParams()
 
-    const [selectedPhase, setSelectedPhase] = useState<PhaseWithMods | undefined>(undefined)
+    const [selectedPhase, setSelectedPhase] = useState<PhaseWithMods>()
     let eventsObj: object = {}
 
     const gamePhases: PhaseWithMods[] = game?.phases as PhaseWithMods[]
@@ -241,8 +241,6 @@ export default function EditReports() {
 
                 <form method="POST" className="flex flex-col items-start py-5 border-b-2 border-b-licorice-800">
                     <input type="hidden" name="phaseId" value={inputs.phaseId} />
-
-                    {JSON.stringify(selectedPhase)}
 
                     <div className="self-center text-3xl font-semibold text-neonblue mb-3">New Event</div>
 
