@@ -69,8 +69,8 @@ export const action: ActionFunction = async ({ request, params }) => {
     if (action === 'add' || action === 'update') {
         const fieldErrors = {
             clues: validateLength(clues, 100),
-            target: (requiredTargetFields?.[eventType].includes('target') && !targetId) ? 'Target required' : undefined,
-            actor: (requiredTargetFields?.[eventType].includes('actor') && !actorId) ? 'Actor required' : undefined,
+            target: (requiredTargetFields?.[eventType]?.includes('target') && !targetId) ? 'Target required' : undefined,
+            actor: (requiredTargetFields?.[eventType]?.includes('actor') && !actorId) ? 'Actor required' : undefined,
         }
 
         if (Object.values(fieldErrors).some(Boolean)) return json({
@@ -179,7 +179,7 @@ export default function EditReports() {
         setSelectedPhase(game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0] || currentPhase ? currentPhase : game?.phases?.filter(phase => true)[0] || undefined)
         setInputs({
             ...inputs,
-            phaseId: game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0]?.id || currentPhase ? currentPhase?.id : game?.phases?.filter(phase => true)[0].id || undefined
+            phaseId: game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0]?.id || currentPhase ? currentPhase?.id : game?.phases?.filter(phase => true)[0]?.id || undefined
         })
     }, [])
 
@@ -302,7 +302,7 @@ export default function EditReports() {
                     </div>
 
 
-                    {requiredTargetFields?.[inputs.eventType].includes('target') && <div className="flex flex-row justify-start items-baseline mb-2">
+                    {requiredTargetFields?.[inputs.eventType]?.includes('target') && <div className="flex flex-row justify-start items-baseline mb-2">
                         <label htmlFor="targetId" className="text-xl mr-5">
                             Target:
                         </label>
@@ -323,7 +323,7 @@ export default function EditReports() {
                         <div className="text-bittersweet ml-3">{!actionData?.fields?.eventId ? actionData?.fieldErrors?.target : ''}</div>
                     </div>}
 
-                    {requiredTargetFields?.[inputs.eventType].includes('actor') && <div className="flex flex-row justify-start items-baseline mb-2">
+                    {requiredTargetFields?.[inputs.eventType]?.includes('actor') && <div className="flex flex-row justify-start items-baseline mb-2">
                         <label htmlFor="actorId" className="text-xl mr-5">
                             Actor:
                         </label>
@@ -397,7 +397,7 @@ export default function EditReports() {
 
                         <select
                             name="message"
-                            value={inputs?.[event.id].message}
+                            value={inputs?.[event.id]?.message}
                             onChange={e => setInputs({
                                 ...inputs,
                                 [event.id]: {
@@ -410,9 +410,9 @@ export default function EditReports() {
                         >
                             {getGameMessages(
                                 game?.gameMessages?.messages,
-                                inputs?.[event.id].eventType,
-                                (inputs?.[event.id].actor !== 'undefined' && inputs?.[event.id].actor) ? characters?.filter(char => char.id === inputs?.[event.id].actor)[0]?.name || '@@@' : undefined,
-                                (inputs?.[event.id].target !== 'undefined' && inputs?.[event.id].target) ? characters?.filter(char => char.id === inputs?.[event.id].target)[0]?.name || '@@' : undefined,
+                                inputs?.[event.id]?.eventType,
+                                (inputs?.[event.id]?.actor !== 'undefined' && inputs?.[event.id]?.actor) ? characters?.filter(char => char.id === inputs?.[event.id]?.actor)[0]?.name || '@@@' : undefined,
+                                (inputs?.[event.id]?.target !== 'undefined' && inputs?.[event.id]?.target) ? characters?.filter(char => char.id === inputs?.[event.id]?.target)[0]?.name || '@@' : undefined,
                             ).map(message => <option
                                 key={message.value}
                                 value={message.value}
@@ -435,7 +435,7 @@ export default function EditReports() {
                                         eventType: e.target.value
                                     }
                                 })}
-                                value={inputs?.[event.id].eventType}
+                                value={inputs?.[event.id]?.eventType}
                                 className="bg-white font-bold text-lg rounded-lg text-licorice-800 py-1 hover:opacity-80"
                             >
                                 {Object.values(EventTypes).filter(type => type !== 'GAME_END').map(type => <option key={type} value={type}>
@@ -444,7 +444,7 @@ export default function EditReports() {
                             </select>
                         </div>
 
-                        {requiredTargetFields?.[inputs?.[event.id].eventType].includes('target') && <div className="flex flex-row justify-start items-baseline mb-2">
+                        {requiredTargetFields?.[inputs?.[event.id]?.eventType]?.includes('target') && <div className="flex flex-row justify-start items-baseline mb-2">
                             <label htmlFor="targetId" className="text-xl mr-5">
                                 Target:
                             </label>
@@ -459,7 +459,7 @@ export default function EditReports() {
                                     }
                                 })}
                                 className="bg-white font-bold text-lg rounded-lg text-licorice-800 py-1 hover:opacity-80"
-                                value={inputs?.[event.id].target}
+                                value={inputs?.[event.id]?.target}
                             >
                                 <option value={'undefined'}>( None )</option>
                                 {game?.participatingCharacters?.map(char => <option key={char.id} value={char.id}>
@@ -469,7 +469,7 @@ export default function EditReports() {
                             <div className="text-bittersweet ml-3">{actionData?.fields?.eventId === event.id ? actionData?.fieldErrors?.target : ''}</div>
                         </div>}
 
-                        {requiredTargetFields?.[inputs?.[event.id].eventType].includes('actor') && <div className="flex flex-row justify-start items-baseline mb-2">
+                        {requiredTargetFields?.[inputs?.[event.id]?.eventType]?.includes('actor') && <div className="flex flex-row justify-start items-baseline mb-2">
                             <label htmlFor="actorId" className="text-xl mr-5">
                                 Actor:
                             </label>
@@ -483,7 +483,7 @@ export default function EditReports() {
                                         actor: e.target.value
                                     }
                                 })}
-                                value={inputs?.[event.id].actor}
+                                value={inputs?.[event.id]?.actor}
                                 className="bg-white font-bold text-lg rounded-lg text-licorice-800 py-1 hover:opacity-80"
                             >
                                 <option value={'undefined'}>( None )</option>
@@ -501,7 +501,7 @@ export default function EditReports() {
                             </div>
                             <textarea
                                 name="clues"
-                                value={inputs?.[event.id].clues}
+                                value={inputs?.[event.id]?.clues}
                                 onChange={e => setInputs({
                                     ...inputs,
                                     [event.id]: {
@@ -521,7 +521,7 @@ export default function EditReports() {
                                 ...inputs,
                                 [event.id]: {
                                     ...inputs?.[event.id],
-                                    draft: inputs?.[event.id].draft === 'true' ? 'false' : 'true'
+                                    draft: inputs?.[event.id]?.draft === 'true' ? 'false' : 'true'
                                 }
 
                             })}
@@ -530,7 +530,7 @@ export default function EditReports() {
                             <input
                                 type="checkbox"
                                 name="draft"
-                                checked={inputs?.[event.id].draft === 'true'}
+                                checked={inputs?.[event.id]?.draft === 'true'}
                                 className="scale-125"
                                 readOnly
                             />
