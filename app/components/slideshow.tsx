@@ -39,7 +39,7 @@ export default function Slideshow({ elements }: props) {
         };
     }, [index]);
     return <div className="m-0 overflow-hidden max-w-full relative">
-        <div className="whitespace-nowrap transition h-[15rem] sm:h-[20rem] md:h-[30rem]" style={{ transform: `translate3d(${-index * 100}%, 0, 0)` }}>
+        <div className="whitespace-nowrap transition h-[18rem] sm:h-[22rem] md:h-[35rem]" style={{ transform: `translate3d(${-index * 100}%, 0, 0)` }}>
             {elements.map(elem => <div
                 key={v4()}
                 style={{ backgroundImage: `url(${elem.imageUrl})` }}

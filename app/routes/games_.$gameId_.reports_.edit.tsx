@@ -1,7 +1,7 @@
 import { EventMessage, EventTypes } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Layout from "~/components/layout";
 import { requiredTargetFields } from "~/utils/constants";
 import { insertRawGameName } from "~/utils/formatters";
@@ -107,36 +107,9 @@ export default function EditReports() {
     const params = useParams()
 
     const [selectedPhase, setSelectedPhase] = useState<PhaseWithMods>()
-    let eventsObj: object = {}
 
-    const gamePhases: PhaseWithMods[] = game?.phases as PhaseWithMods[]
 
-    gamePhases.filter(phase => phase.events?.length !== 0)?.map(phase => {
-        phase?.events?.map(event => {
-            const newItem: object = actionData?.fields?.eventId === event.id ? {
-                [event.id]: {
-                    message: actionData.fields.message || 'No values!',
-                    eventType: (actionData.fields.eventType || 'KILL') as EventTypes,
-                    target: actionData.fields.target || 'undefined',
-                    actor: actionData.fields.message || 'undefined',
-                    clues: actionData.fields.clues || '',
-                    draft: actionData.fields.draft || ''
-                }
-            } : {
-                [event.id]: {
-                    message: event.message || '',
-                    eventType: event.type || 'KILL' as EventTypes,
-                    target: event.targetId || 'undefined',
-                    actor: event.actorId || 'undefined',
-                    clues: event.clues.join('$$') || '',
-                    draft: event.draft ? 'true' : 'false'
-                }
-            }
-            eventsObj = { ...eventsObj, ...newItem }
-        })
-    })
-
-    const [inputs, setInputs] = (actionData?.fields?.eventId || !actionData) ? useState<any>({
+    const [inputs, setInputs] = useState<any>((actionData?.fields?.eventId || !actionData) ? {
         phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
         message: '',
         eventType: 'KILL' as EventTypes,
@@ -144,8 +117,7 @@ export default function EditReports() {
         actor: 'undefined',
         clues: '',
         draft: 'true',
-        ...eventsObj
-    }) : useState<any>({
+    } : {
         phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
         message: actionData?.fields?.message || '',
         eventType: actionData?.fields?.eventType || 'KILL' as EventTypes,
@@ -153,18 +125,60 @@ export default function EditReports() {
         actor: actionData?.fields?.actorId || 'undefined',
         clues: actionData?.fields?.clues || '',
         draft: actionData?.fields?.draft === 'false' ? 'false' : 'true',
-        ...eventsObj
     })
 
     useEffect(() => {
         setSelectedPhase(game?.phases?.filter(phase => phase.id === inputs.phaseId)[0])
-    }, [inputs.phaseId])
+    }, [inputs?.phaseId])
 
     useEffect(() => {
+        let eventsObj: object = {}
+
+        const gamePhases: PhaseWithMods[] = game?.phases as PhaseWithMods[]
+
+        gamePhases.filter(phase => phase.events?.length !== 0)?.map(phase => {
+            phase?.events?.map(event => {
+                const newItem: object = actionData?.fields?.eventId === event.id ? {
+                    [event.id]: {
+                        message: actionData.fields.message || 'No values!',
+                        eventType: (actionData.fields.eventType || 'KILL') as EventTypes,
+                        target: actionData.fields.target || 'undefined',
+                        actor: actionData.fields.message || 'undefined',
+                        clues: actionData.fields.clues || '',
+                        draft: actionData.fields.draft || ''
+                    }
+                } : {
+                    [event.id]: {
+                        message: event.message || '',
+                        eventType: event.type || 'KILL' as EventTypes,
+                        target: event.targetId || 'undefined',
+                        actor: event.actorId || 'undefined',
+                        clues: event.clues.join('$$') || '',
+                        draft: event.draft ? 'true' : 'false'
+                    }
+                }
+                eventsObj = { ...eventsObj, ...newItem }
+            })
+        })
         setSelectedPhase(game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0] || currentPhase ? currentPhase : game?.phases?.filter(phase => true)[0] || undefined)
-        setInputs({
-            ...inputs,
-            phaseId: game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0]?.id || currentPhase ? currentPhase?.id : game?.phases?.filter(phase => true)[0].id || undefined
+        setInputs((actionData?.fields?.eventId || !actionData) ? {
+            phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
+            message: '',
+            eventType: 'KILL' as EventTypes,
+            target: 'undefined',
+            actor: 'undefined',
+            clues: '',
+            draft: 'true',
+            ...eventsObj
+        } : {
+            phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
+            message: actionData?.fields?.message || '',
+            eventType: actionData?.fields?.eventType || 'KILL' as EventTypes,
+            target: actionData?.fields?.targetId || 'undefined',
+            actor: actionData?.fields?.actorId || 'undefined',
+            clues: actionData?.fields?.clues || '',
+            draft: actionData?.fields?.draft === 'false' ? 'false' : 'true',
+            ...eventsObj
         })
     }, [])
 

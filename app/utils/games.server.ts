@@ -705,8 +705,11 @@ export const manageReports: (
                 error: 'Could not create new phase'
             }
 
-            if (game.status === 'ENLISTING') await startGame(game.id)
-            else game.participatingCharacterIds.map(async id => await sendMessage(process.env.OCM_OFFICIAL_ID || '64dbab8c66b6b26e41e51a57', id, `A  new report has been published in ${game.name}!`, "PHASE_PUBLISHED", `/games/${game.id}`))
+            if (game.status === 'ENLISTING') {
+                await startGame(game.id)
+            } else {
+                game.participatingCharacterIds.map(async id => await sendMessage(process.env.OCM_OFFICIAL_ID || '64dbab8c66b6b26e41e51a57', id, `A  new report has been published in ${game.name}!`, "PHASE_PUBLISHED", `/games/${game.id}`))
+            }
 
             break
         }
