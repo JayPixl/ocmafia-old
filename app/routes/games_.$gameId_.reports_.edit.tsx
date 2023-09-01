@@ -106,33 +106,12 @@ export default function EditReports() {
     const actionData = useActionData()
     const params = useParams()
 
+    const firstLoad = useRef<number>(0)
+
     const [selectedPhase, setSelectedPhase] = useState<PhaseWithMods>()
+    var eventsObj: object = {}
 
-
-    const [inputs, setInputs] = useState<any>((actionData?.fields?.eventId || !actionData) ? {
-        phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
-        message: '',
-        eventType: 'KILL' as EventTypes,
-        target: 'undefined',
-        actor: 'undefined',
-        clues: '',
-        draft: 'true',
-    } : {
-        phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
-        message: actionData?.fields?.message || '',
-        eventType: actionData?.fields?.eventType || 'KILL' as EventTypes,
-        target: actionData?.fields?.targetId || 'undefined',
-        actor: actionData?.fields?.actorId || 'undefined',
-        clues: actionData?.fields?.clues || '',
-        draft: actionData?.fields?.draft === 'false' ? 'false' : 'true',
-    })
-
-    useEffect(() => {
-        setSelectedPhase(game?.phases?.filter(phase => phase.id === inputs.phaseId)[0])
-    }, [inputs?.phaseId])
-
-    useEffect(() => {
-        let eventsObj: object = {}
+    if (firstLoad.current !== 1) {
 
         const gamePhases: PhaseWithMods[] = game?.phases as PhaseWithMods[]
 
@@ -160,25 +139,47 @@ export default function EditReports() {
                 eventsObj = { ...eventsObj, ...newItem }
             })
         })
+
+        if (process.env.NODE_ENV === "production") {
+            firstLoad.current = 1
+        } else {
+            if (firstLoad.current === 0) {
+                firstLoad.current = -1
+            } else {
+                firstLoad.current = 1
+            }
+        }
+    }
+
+    const [inputs, setInputs] = (actionData?.fields?.eventId || !actionData) ? useState<any>({
+        phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
+        message: '',
+        eventType: 'KILL' as EventTypes,
+        target: 'undefined',
+        actor: 'undefined',
+        clues: '',
+        draft: 'true',
+        ...eventsObj
+    }) : useState<any>({
+        phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
+        message: actionData?.fields?.message || '',
+        eventType: actionData?.fields?.eventType || 'KILL' as EventTypes,
+        target: actionData?.fields?.targetId || 'undefined',
+        actor: actionData?.fields?.actorId || 'undefined',
+        clues: actionData?.fields?.clues || '',
+        draft: actionData?.fields?.draft === 'false' ? 'false' : 'true',
+        ...eventsObj
+    })
+
+    useEffect(() => {
+        setSelectedPhase(game?.phases?.filter(phase => phase.id === inputs.phaseId)[0])
+    }, [inputs.phaseId])
+
+    useEffect(() => {
         setSelectedPhase(game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0] || currentPhase ? currentPhase : game?.phases?.filter(phase => true)[0] || undefined)
-        setInputs((actionData?.fields?.eventId || !actionData) ? {
-            phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
-            message: '',
-            eventType: 'KILL' as EventTypes,
-            target: 'undefined',
-            actor: 'undefined',
-            clues: '',
-            draft: 'true',
-            ...eventsObj
-        } : {
-            phaseId: actionData?.fields?.phaseId || currentPhase?.id || undefined,
-            message: actionData?.fields?.message || '',
-            eventType: actionData?.fields?.eventType || 'KILL' as EventTypes,
-            target: actionData?.fields?.targetId || 'undefined',
-            actor: actionData?.fields?.actorId || 'undefined',
-            clues: actionData?.fields?.clues || '',
-            draft: actionData?.fields?.draft === 'false' ? 'false' : 'true',
-            ...eventsObj
+        setInputs({
+            ...inputs,
+            phaseId: game?.phases?.filter(phase => phase.id === actionData?.phaseId)[0]?.id || currentPhase ? currentPhase?.id : game?.phases?.filter(phase => true)[0].id || undefined
         })
     }, [])
 
