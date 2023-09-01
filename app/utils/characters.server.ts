@@ -17,7 +17,8 @@ export const getCharacterbyId: (
                 select: {
                     id: true,
                     username: true,
-                    avatar: true
+                    avatar: true,
+                    slug: true
                 }
             }
         }

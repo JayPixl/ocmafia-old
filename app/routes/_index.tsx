@@ -26,7 +26,7 @@ export default function Index() {
 
       <Slideshow elements={[
         {
-          imageUrl: '/images/mafia-by-k1tty.png',
+          imageUrl: 'https://res.cloudinary.com/dvs0gmvvc/image/upload/v1693543268/mafia-by-k1tty_wyw4jx.png',
           credit: {
             display: 'K1tty5 on DeviantArt',
             url: 'https://www.deviantart.com/k1tty5'
@@ -43,7 +43,7 @@ export default function Index() {
           </>
         },
         {
-          imageUrl: '/images/evoidless-peach-dark-angel.png',
+          imageUrl: 'https://res.cloudinary.com/dvs0gmvvc/image/upload/v1693543269/evoidless-peach-dark-angel_uegdcn.png',
           credit: {
             display: 'Evoidless on DeviantArt',
             url: 'https://www.deviantart.com/evoidless'

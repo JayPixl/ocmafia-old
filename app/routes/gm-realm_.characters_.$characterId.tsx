@@ -40,7 +40,7 @@ export default function Character() {
                                     Edit
                                 </Link>
                             </div> : <Link
-                                to={`/profile/${character.ownerId}`}
+                                to={`/profile/${character.owner.slug}`}
                                 className="absolute top-3 right-3 flex flex-row items-center"
                             >
                                 <UserCircle
