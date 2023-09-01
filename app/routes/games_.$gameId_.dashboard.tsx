@@ -1,4 +1,4 @@
-import { ActionType, Alignment, Game, GameCharacterStatus, Role, User } from "@prisma/client";
+import { ActionType } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constant
 import { editActions, getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
 import { getActionOptions, getMyCharacterGameProfile } from "~/utils/roles.server";
-import { CharacterWithMods, CharacterWithRole, EventWithMods, GameWithMods, PhaseWithMods, RoleWithNotes, UserWithMods } from "~/utils/types";
+import { CharacterWithRole, GameWithMods, PhaseWithMods, RoleWithNotes, UserWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -174,7 +174,7 @@ export default function Dashboard() {
                         />
 
                         <div className="text-xl md:text-2xl font-bold">
-                            {character?.name} {GameCharacterStatusEmojis[currentPhase?.characterStatus?.status.filter(status => status.characterId === character?.id)[0].status!]}
+                            {character?.name} {GameCharacterStatusEmojis[currentPhase?.characterStatus?.status.filter(status => status.characterId === character?.id)[0]?.status!]}
                         </div>
 
                         <div className="flex flex-row items-stretch justify-evenly font-semibold text-xl my-2 bg-dogwood text-licorice-900 rounded-md w-full">
@@ -208,19 +208,19 @@ export default function Dashboard() {
                                         name={`action[${index}]`}
                                         value={actionsInput[index]?.selected || "No Action"}
                                         onChange={e => setActionsInput(actionsInput.map(input => input.type === action.type ? { ...input, selected: e.target.value } : input))}
-                                        className="my-2 rounded-lg bg-slate-100 text-lg"
+                                        className="my-2 rounded-lg bg-slate-100 text-lg text-licorice-800"
                                     >
                                         {action.options.map(option => <option key={option.value} value={option.value}>
                                             {option.name}
                                         </option>)}
                                     </select>
 
-                                    {["MAFIA_KILL", "INDEPENDENT_KILL"].includes(action.type) ? <select
+                                    {["MAFIA_KILL", "INDEPENDENT_KILL"]?.includes(action.type) ? <select
                                         value={actionsInput[index]?.selectedStrategy || "STRENGTH"}
                                         onChange={e => setActionsInput(actionsInput.map(input => input.type === action.type ? { ...input, selectedStrategy: e.target.value } : input))}
-                                        className="my-2"
+                                        className="my-2 rounded-lg bg-slate-100 text-lg text-licorice-800"
                                     >
-                                        {["STRENGTH", "STEALTH", "SKILL", "CHARISMA"].map(stat => <option key={v4()} value={stat}>
+                                        {["STRENGTH", "STEALTH", "SKILL", "CHARISMA"]?.map(stat => <option key={v4()} value={stat}>
                                             {stat.substring(0, 3)}
                                         </option>)}
                                     </select> : ""}

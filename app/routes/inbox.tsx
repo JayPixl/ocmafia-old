@@ -28,7 +28,8 @@ export const action: ActionFunction = async ({ request }) => {
 }
 
 export default function Inbox() {
-    const { user, messages }: { user?: UserWithMods, messages?: ExtendedInboxItem[] } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, messages }: { user?: UserWithMods, messages?: ExtendedInboxItem[] } = loaderData
 
     return (
         <Layout

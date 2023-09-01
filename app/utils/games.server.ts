@@ -30,7 +30,9 @@ export const createGame: (form: {
                         }
                     },
                     characterStatus: {
-                        create: true
+                        create: {
+
+                        }
                     }
                 }
             },
