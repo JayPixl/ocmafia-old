@@ -41,7 +41,7 @@ export default function Inbox() {
                     <div className="font-bold text-3xl">
                         Inbox
                     </div>
-                    {messages?.length !== 0 ? messages?.map((message, index) => <form
+                    {messages?.length !== 0 ? messages?.reverse()?.map((message, index) => <form
                         method="POST"
                         key={message.uniqueId}
                         className={`w-full flex flex-row items-center justify-between p-4 ${index % 2 ? 'bg-licorice-700' : ''} ${index !== messages.length - 1 ? 'border-b-2 border-b-licorice-800' : ''}`}

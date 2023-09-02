@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     return json({ error })
 }
 
-export default function Profile() {
+export default function ProfileFollowers() {
     const { user, owner, profileData, following } = useLoaderData()
     const params = useParams()
 
@@ -67,52 +67,11 @@ export default function Profile() {
                             </div>
                         </div>
                     </div>
-                    <div className="w-full text-center p-3 text-2xl">Characters</div>
-                    <div className="flex flex-row w-full justify-center items-center flex-wrap">
-                        {profileData.characters?.length > 0 ? profileData.characters.map((character: CharacterWithMods) => (
-                            <Link to={`/gm-realm/characters/${character.id}`} key={character.id}>
-                                <div
-                                    className="bg-licorice-600 h-28 w-52 rounded-md m-2 hover:opacity-80 bg-cover transition overflow-hidden"
-                                    style={character.featuredImageUrl ? { backgroundImage: `url(${character.featuredImageUrl})` } : undefined}
-                                >
-                                    <div className="w-full h-full relative backdrop-brightness-75">
-                                        <div className="absolute top-1 right-1 flex flex-row text-sm">
-                                            {character.crowns} 👑 {character.strikes} ❌
-                                        </div>
-
-                                        <div className="absolute bottom-1 left-1 flex flex-row justify-center items-end">
-                                            <CharacterAvatar
-                                                avatarUrl={character?.avatarUrl || undefined}
-                                                size="SMALL"
-                                            />
-                                            <div className="ml-2 font-semibold">{character.displayName || character.name}</div>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </Link>
-                        )) : !owner && <div
-                            className="bg-licorice-600 h-28 w-52 rounded-md m-2 relative flex justify-center items-center"
-                        >
-                            No characters yet!
-                        </div>}
-                        {owner && profileData.characters.length < profileData.characterLimit && (
-                            <Link to={`/gm-realm/characters/create`}>
-                                <div
-                                    className="bg-licorice-600 h-28 w-28 rounded-md m-2 relative flex justify-center items-center font-bold text-3xl hover:opacity-80"
-                                >
-                                    +
-                                </div>
-                            </Link>
-                        )}
-                    </div>
-
-                    <div className="m-3" />
 
                     <div className="py-3">
-                        <Link to={`/profile/${params.userId}/followers`} className="text-center text-2xl block">Followers - ({profileData.followedBy.length})</Link>
-                        <div className="flex flex-row justify-center overflow-x-auto">
-                            {profileData?.followedBy?.length > 0 ? profileData?.followedBy?.slice(0, 3)?.map((follower: any) => <Link to={`/profile/${follower.slug}`} key={follower.id} className="mx-1 md:mx-3">
+                        <div className="text-center text-2xl">Followers - ({profileData.followedBy.length})</div>
+                        <div className="flex flex-row justify-center flex-wrap">
+                            {profileData?.followedBy?.length > 0 ? profileData?.followedBy?.map((follower: any) => <Link to={`/profile/${follower.slug}`} key={follower.id} className="mx-1 md:mx-3">
                                 <div className="flex flex-col justify-center items-center p-1 w-24 md:p-3">
                                     <div className="w-full flex justify-center">
                                         <UserCircle
@@ -128,22 +87,13 @@ export default function Profile() {
                                     </div>
                                 </div>
                             </Link>) : <div className="py-5">No followers yet!</div>}
-                            {profileData?.followedBy?.length > 3 && (
-                                <Link to={`/profile/${params.userId}/followers`}>
-                                    <div
-                                        className="p-2 rounded-md m-2 flex justify-center items-center text-3xl font-bold hover:opacity-80"
-                                    >
-                                        ...
-                                    </div>
-                                </Link>
-                            )}
                         </div>
                     </div>
 
                     <div className="py-3">
-                        <Link to={`/profile/${params.userId}/followers`} className="text-center text-2xl block">Following - ({profileData.following.length})</Link>
-                        <div className="flex flex-row justify-center overflow-x-auto">
-                            {profileData?.following?.length > 0 ? profileData?.following?.slice(0, 3)?.map((follower: any) => <Link to={`/profile/${follower.slug}`} key={follower.id} className="mx-1 md:mx-3">
+                        <div className="text-center text-2xl">Following - ({profileData.following.length})</div>
+                        <div className="flex flex-row justify-center flex-wrap">
+                            {profileData?.following?.length > 0 ? profileData?.following?.map((follower: any) => <Link to={`/profile/${follower.slug}`} key={follower.id} className="mx-1 md:mx-3">
                                 <div className="flex flex-col justify-center items-center p-1 w-24 md:p-3">
                                     <div className="w-full flex justify-center">
                                         <UserCircle
@@ -159,15 +109,6 @@ export default function Profile() {
                                     </div>
                                 </div>
                             </Link>) : <div className="py-5">Not following anyone yet!</div>}
-                            {profileData?.following?.length > 3 && (
-                                <Link to={`/profile/${params.userId}/followers`}>
-                                    <div
-                                        className="p-2 rounded-md m-2 flex justify-center items-center text-3xl font-bold hover:opacity-80"
-                                    >
-                                        ...
-                                    </div>
-                                </Link>
-                            )}
                         </div>
                     </div>
 
