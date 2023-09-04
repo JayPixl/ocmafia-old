@@ -710,7 +710,7 @@ export const manageReports: (
             if (game.status === 'ENLISTING') {
                 await startGame(game.id)
             } else {
-                game.participatingCharacterIds.map(async id => await sendMessage(process.env.OCM_OFFICIAL_ID || '64dbab8c66b6b26e41e51a57', id, `A  new report has been published in ${game.name}!`, "PHASE_PUBLISHED", `/games/${game.id}`))
+                game.participatingCharacterIds.map(async id => await sendMessage(process.env.OCM_OFFICIAL_ID || '64dbab8c66b6b26e41e51a57', (await prisma.user.findFirst({ where: { characters: { some: { id } } } }))?.id || '', `A  new report has been published in ${game.name}!`, "PHASE_PUBLISHED", `/games/${game.id}`))
             }
 
             break

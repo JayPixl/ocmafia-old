@@ -2,8 +2,10 @@ import { Game, Phase, User } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
 import GameMessage from "~/components/game-message";
+import GameToolbar from "~/components/game-toolbar";
 import Layout from "~/components/layout";
 import { getGameById, requireHost } from "~/utils/games.server";
+import { getMyCharacterGameProfile } from "~/utils/roles.server";
 import { PhaseWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
@@ -13,11 +15,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const { game } = await getGameById(params.gameId || '')
     if (!game) return redirect('/games')
 
-    return json({ user, game, authorized })
+    const { character, myRole } = user?.id ? await getMyCharacterGameProfile(user.id, game.id) : { character: undefined, myRole: undefined }
+
+    return json({ user, game, authorized, registeredCharacter: character })
 }
 
 export default function Reports() {
-    const { user, game, authorized } = useLoaderData()
+    const { user, game, authorized, registeredCharacter } = useLoaderData()
     const params = useParams()
     return (
         <Layout
@@ -29,8 +33,14 @@ export default function Reports() {
                 { name: "Reports", url: `/games/${params?.gameId}/reports`, id: 'reports' || '', parent: params?.gameId }
             ]}
         >
+            <GameToolbar
+                currentPage="reports"
+                host={authorized}
+                gameId={game?.id}
+                dashboard={!!registeredCharacter}
+                joinable={game?.status === 'ENLISTING' && !registeredCharacter}
+            />
             <div className="p-8 flex flex-col">
-                <Link to={`/games/${params?.gameId}`}><div className="">← Back to {game?.name}</div></Link>
                 <div><h2 className="text-3xl font-bold py-5">All Reports</h2></div>
 
                 <div className="w-full flex flex-col bg-dogwood text-licorice-800 rounded-lg p-5">

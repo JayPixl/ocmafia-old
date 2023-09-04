@@ -2,9 +2,11 @@ import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
 import CharacterAvatar from "~/components/character-avatar";
 import GameMessage from "~/components/game-message";
+import GameToolbar from "~/components/game-toolbar";
 import Layout from "~/components/layout";
 import { GameCharacterStatusEmojis } from "~/utils/constants";
 import { getGameById, requireHost } from "~/utils/games.server";
+import { getMyCharacterGameProfile } from "~/utils/roles.server";
 import { CharacterWithMods, EventWithMods, GameWithMods, PhaseWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
@@ -21,11 +23,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const phase = moddedGame.phases?.filter(phase => phase.id === params.phaseId && phase.draft === false)[0]
     if (!phase) return redirect(`/games/${params.gameId}`)
 
-    return json({ user, game, authorized, phase })
+    const { character, myRole } = user?.id ? await getMyCharacterGameProfile(user.id, game.id) : { character: undefined, myRole: undefined }
+
+    return json({ user, game, authorized, phase, registeredCharacter: character })
 }
 
 export default function Report() {
-    const { user, game, authorized, phase } = useLoaderData()
+    const { user, game, authorized, phase, registeredCharacter } = useLoaderData()
     const params = useParams()
     return (
         <Layout
@@ -37,9 +41,14 @@ export default function Report() {
                 { name: "Reports", url: `/games/${params?.gameId}/reports`, id: 'reports' || '', parent: params?.gameId }
             ]}
         >
+            <GameToolbar
+                currentPage="reports"
+                host={authorized}
+                gameId={game?.id}
+                dashboard={!!registeredCharacter}
+                joinable={game?.status === 'ENLISTING' && !registeredCharacter}
+            />
             <div className="p-8 flex flex-col">
-                <Link to={`/games/${params?.gameId}/reports`}><div className="py-2">← Back to all reports</div></Link>
-
                 <div className={`w-full flex flex-col ${phase.time === 'DAY' ?
                     'bg-dogwood text-licorice-800' :
                     'bg-licorice-900 text-dogwood'} rounded-lg p-5`

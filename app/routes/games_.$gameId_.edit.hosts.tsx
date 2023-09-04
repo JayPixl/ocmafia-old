@@ -30,7 +30,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 export default function EditGameHosts() {
     const loaderData = useLoaderData()
-    const { user, game, admin }: { user?: User, game?: GameWithMods, admin?: boolean } = loaderData
+    const { game }: { game?: GameWithMods } = loaderData
     const action = useActionData()
     const fetcher = useFetcher()
 
@@ -53,7 +53,7 @@ export default function EditGameHosts() {
         fetcher.load(`/fetch/users?${queryParams}`)
     }
 
-    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)}>
+    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)} className="w-2/3 p-8">
         <div className="text-red-500">
             {action?.error}
         </div>
@@ -73,14 +73,15 @@ export default function EditGameHosts() {
             {
                 fetcher?.data?.results?.map((player: any) => (
                     (listItems.filter(i => i.id === player.id)).length === 0 && (
-                        <div key={player.id} className="flex flex-row">
-                            <div>
+                        <div key={player.id} className="flex flex-row my-2">
+                            <div className="font-semibold">
                                 {player.username}
                             </div>
                             <button
                                 type="submit"
                                 name="_action"
                                 value={player.id}
+                                className="text-green-600 underline hover:no-underline ml-3"
                             >
                                 Add
                             </button>
@@ -98,14 +99,15 @@ export default function EditGameHosts() {
             />
             {
                 listItems.map(item => (
-                    <div key={item.name} className="flex flex-row">
-                        <div>
+                    <div key={item.name} className="flex flex-row my-2">
+                        <div className="font-semibold">
                             {item?.username || item?.name}
                         </div>
                         <button
                             type="submit"
                             name="_action"
                             value={item.id}
+                            className="text-bittersweet underline hover:no-underline ml-3"
                         >
                             Remove
                         </button>

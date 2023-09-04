@@ -3,6 +3,7 @@ import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData, useParams } from "@remix-run/react";
 import { useState, useEffect } from 'react'
 import { v4 } from "uuid";
+import GameEditToolbar from "~/components/game-edit-toolbar";
 import Layout from "~/components/layout";
 import { effectivenessDice, effectivenessResult } from "~/utils/constants";
 import { getGameById, requireHost } from "~/utils/games.server";
@@ -82,6 +83,10 @@ export default function KillCalculator() {
                 { name: "Edit", url: `/games/${params?.gameId}/edit`, id: 'edit' || '', parent: params?.gameId }
             ]}
         >
+            <GameEditToolbar
+                currentPage="killCalculator"
+                gameId={game?.id}
+            />
             <div className="text-3xl font-bold mt-6 w-full text-center">
                 Kill Calculator
             </div>

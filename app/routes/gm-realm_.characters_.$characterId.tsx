@@ -35,7 +35,7 @@ export default function Character() {
                 {character ? (
                     <div className="flex justify-center items-center">
                         <div className="bg-licorice-600 md:w-2/3 lg:p-12 m-5 rounded-lg w-full p-8 relative">
-                            {character?.ownerId === user?.id ? <div className="absolute top-0 right-0">
+                            {character?.ownerId === user?.id ? <div className="absolute top-0 right-2">
                                 <Link to={`/gm-realm/characters/${params.characterId}/edit`}>
                                     Edit
                                 </Link>
@@ -89,7 +89,7 @@ export default function Character() {
                                 className="w-full h-48 bg-center my-4"
                             ></div>}
 
-                            <div className="flex flex-row items-stretch justify-evenly font-semibold text-xl my-2 bg-dogwood text-licorice-900 rounded-md">
+                            <div className="flex flex-row items-stretch justify-evenly flex-wrap sm:flex-nowrap font-semibold text-xl my-2 bg-dogwood text-licorice-900 rounded-md">
                                 <div>STR: {character.stats.strength}</div>
                                 <div>STL: {character.stats.stealth}</div>
                                 <div>SKL: {character.stats.skill}</div>

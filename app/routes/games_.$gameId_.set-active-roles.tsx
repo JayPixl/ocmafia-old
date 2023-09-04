@@ -1,11 +1,12 @@
-import { CharGameStatusPairing, GameCharacterStatus, Role, User } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { ActionFunction, LoaderArgs, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react";
 import { useState, useEffect } from 'react'
-import CharacterAvatar from "~/components/character-avatar";
+import GameEditToolbar from "~/components/game-edit-toolbar";
 import Layout from "~/components/layout";
-import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constants";
-import { getGameById, manageCharacterStatus, requireHost } from "~/utils/games.server";
+import Toolbar from "~/components/toolbar";
+import { RoleAlignmentEmojis } from "~/utils/constants";
+import { getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
 import { updateActiveRoles } from "~/utils/roles.server";
 import { GameWithMods, PhaseWithMods } from "~/utils/types";
@@ -21,7 +22,7 @@ export async function loader({ request, params }: LoaderArgs) {
     const { game }: { game?: GameWithMods } = await getGameById(params.gameId || '')
     if (!game) return redirect('/games')
 
-    if (game.status !== 'ENLISTING') return redirect(`/games/${params.gameId}/edit`)
+    if (game.status !== 'ENLISTING') return redirect(`/games/${params.gameId}/character-status/edit`)
 
     const roles = (await prisma.role.findMany({
         select: {
@@ -104,6 +105,32 @@ export default function SetActiveRoles() {
             { name: "Edit", url: `/games/${params?.gameId}/edit`, id: 'edit' || '', parent: params?.gameId }
         ]}
     >
+        <GameEditToolbar
+            currentPage="roles"
+            gameId={game.id}
+        />
+        <Toolbar
+            currentTab="activeRoles"
+            tabs={[
+                {
+                    display: "Active Roles",
+                    id: "activeRoles",
+                    url: `/games/${params.gameId}/set-active-roles`,
+                    emoji: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                        <path fillRule="evenodd" d="M19 5.5a4.5 4.5 0 01-4.791 4.49c-.873-.055-1.808.128-2.368.8l-6.024 7.23a2.724 2.724 0 11-3.837-3.837L9.21 8.16c.672-.56.855-1.495.8-2.368a4.5 4.5 0 015.873-4.575c.324.105.39.51.15.752L13.34 4.66a.455.455 0 00-.11.494 3.01 3.01 0 001.617 1.617c.17.07.363.02.493-.111l2.692-2.692c.241-.241.647-.174.752.15.14.435.216.9.216 1.382zM4 17a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+
+                },
+                {
+                    display: "Assign Roles",
+                    id: "assignRoles",
+                    url: `/games/${params.gameId}/assign-roles`,
+                    emoji: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 014.308-3.516 6.484 6.484 0 00-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 01-2.07-.655zM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654zM18 8a2 2 0 11-4 0 2 2 0 014 0zM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81z" />
+                    </svg>
+                }
+            ]}
+        />
         <div className="p-5">
             <div className="w-full flex flex-col items-center">
 
@@ -115,7 +142,7 @@ export default function SetActiveRoles() {
 
                     <div className="flex flex-row flex-wrap justify-center">
 
-                        {inputs?.map((item, index) => <div className="flex flex-row justify-between items-center w-full sm:w-1/4 m-3" key={crypto.randomUUID()}>
+                        {inputs?.map((item, index) => <div className="flex flex-row justify-between items-center min-w-fit w-full sm:w-1/4 m-3" key={crypto.randomUUID()}>
 
                             <select
                                 name={`roles[${index}]`}

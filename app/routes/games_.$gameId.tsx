@@ -3,6 +3,7 @@ import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
 import { v4 } from "uuid";
 import CharacterAvatar from "~/components/character-avatar";
+import GameToolbar from "~/components/game-toolbar";
 import Layout from "~/components/layout";
 import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constants";
 import { formatCase } from "~/utils/formatters";
@@ -108,6 +109,13 @@ export default function Games() {
                 { name: game?.name || '', url: `/games/${params?.gameId}`, id: params?.gameId || '', parent: 'games' }
             ]}
         >
+            <GameToolbar
+                currentPage="home"
+                host={authorized}
+                gameId={game?.id}
+                dashboard={!!registeredCharacter}
+                joinable={game?.status === 'ENLISTING' && !registeredCharacter}
+            />
             <div className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
 
@@ -120,7 +128,7 @@ export default function Games() {
 
                         <div className="italic text-lg mb-3">{game?.location}</div>
                     </div>
-                    {registeredCharacter ? <Link
+                    {/* {registeredCharacter ? <Link
                         to={`/games/${game?.id}/dashboard`}
                         className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 mb-5 hover:bg-transparent hover:text-bittersweet transition"
                     >
@@ -130,7 +138,7 @@ export default function Games() {
                         className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 mb-5 hover:bg-transparent hover:text-bittersweet transition"
                     >
                         Join Game
-                    </Link>}
+                    </Link>} */}
                 </div>
                 <div className={
                     `w-full flex flex-col sm:flex-row 
@@ -227,14 +235,6 @@ export default function Games() {
                     </div>
                 </div>
                     : ''}
-
-                {authorized && (
-                    <div className="underline my-3">
-                        <Link to={`/games/${params.gameId}/edit`}>
-                            Edit Game
-                        </Link>
-                    </div>
-                )}
             </div>
         </Layout>
     )

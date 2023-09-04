@@ -103,7 +103,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function EditCharacter() {
-    const { user, character, error }: { user?: UserWithMods, character?: any, error?: string } = useLoaderData()
+    const loaderData = useLoaderData()
+    const { user, character, error }: { user?: UserWithMods, character?: any, error?: string } = loaderData
     const actionData = useActionData()
 
     const params = useParams()

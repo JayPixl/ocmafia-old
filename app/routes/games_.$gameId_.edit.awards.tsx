@@ -45,7 +45,7 @@ export default function EditGameName() {
         loserRubies: game?.loserRubies?.toString() || '1',
     })
 
-    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)}>
+    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)} className="w-2/3 p-8">
         <form method="POST">
             <input
                 type="hidden"
@@ -56,32 +56,33 @@ export default function EditGameName() {
                 name='winnerCrowns'
                 value={form.winnerCrowns}
                 onChange={e => setForm({ ...form, winnerCrowns: e.target.value })}
-                display={`Winner Crowns`}
+                display={`Winner Crowns 👑`}
                 type="number"
             />
             <InputField
                 name='winnerRubies'
                 value={form.winnerRubies}
                 onChange={e => setForm({ ...form, winnerRubies: e.target.value })}
-                display={`Winner Rubies`}
+                display={`Winner Rubies 💎`}
                 type="number"
             />
             <InputField
                 name='loserStrikes'
                 value={form.loserStrikes}
                 onChange={e => setForm({ ...form, loserStrikes: e.target.value })}
-                display={`Loser Strikes`}
+                display={`Loser Strikes ❌`}
                 type="number"
             />
             <InputField
                 name='loserRubies'
                 value={form.loserRubies}
                 onChange={e => setForm({ ...form, loserRubies: e.target.value })}
-                display={`Loser Rubies`}
+                display={`Loser Rubies 💎`}
                 type="number"
             />
             <button
                 type="submit"
+                className="w-full font-semibold underline hover:no-underline text-neonblue"
             >
                 Save Changes
             </button>

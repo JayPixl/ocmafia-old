@@ -1,6 +1,7 @@
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData, useParams } from "@remix-run/react";
 import CharacterAvatar from "~/components/character-avatar";
+import GameToolbar from "~/components/game-toolbar";
 import Layout from "~/components/layout";
 import { getGameById, toggleGameJoinRequest } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
@@ -52,6 +53,11 @@ export default function JoinGame() {
                 { name: game?.name || '', url: `/games/${params?.gameId}`, id: params?.gameId || '', parent: 'games' }
             ]}
         >
+            <GameToolbar
+                currentPage="join"
+                gameId={game?.id}
+                joinable
+            />
             <div className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
 

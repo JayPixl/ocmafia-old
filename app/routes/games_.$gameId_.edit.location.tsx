@@ -39,7 +39,7 @@ export default function EditGameLocation() {
         location: game?.location || ''
     })
 
-    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)}>
+    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)} className="w-2/3 p-8">
         <form method="POST">
             <input
                 type="hidden"
@@ -55,6 +55,7 @@ export default function EditGameLocation() {
             />
             <button
                 type="submit"
+                className="w-full font-semibold underline hover:no-underline text-neonblue"
             >
                 Save Changes
             </button>

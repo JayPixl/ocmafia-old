@@ -2,11 +2,14 @@ import { GameRoles, User } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useNavigate, useParams } from "@remix-run/react";
 import { useState } from 'react'
+import CharacterAvatar from "~/components/character-avatar";
+import EditButton from "~/components/edit-button";
+import GameEditToolbar from "~/components/game-edit-toolbar";
 import Layout from "~/components/layout";
 import { Modal } from "~/components/modal";
 import { getGameById, requireHost } from "~/utils/games.server";
 import { prisma } from "~/utils/prisma.server";
-import { GameWithMods } from "~/utils/types";
+import { CharacterWithMods, GameWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -23,17 +26,54 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         }
     })
 
-    return json({ user, game, admin, assignedRoles })
+    const invitedCharacters = await prisma.character.findMany({
+        where: {
+            id: {
+                in: game.pendingInviteIds
+            }
+        },
+        select: {
+            id: true,
+            name: true,
+            avatarUrl: true
+        }
+    })
+
+    const requestedCharacters = await prisma.character.findMany({
+        where: {
+            id: {
+                in: game.joinRequestIds
+            }
+        },
+        select: {
+            id: true,
+            name: true,
+            avatarUrl: true
+        }
+    })
+
+    return json({ user, game, admin, assignedRoles, invitedCharacters, requestedCharacters })
 }
 
 export default function EditGame() {
     const loaderData = useLoaderData()
-    const { user, game, admin, assignedRoles }: { user?: User, game?: GameWithMods, admin?: boolean, assignedRoles?: GameRoles } = loaderData
+    const {
+        user,
+        game,
+        admin,
+        assignedRoles,
+        invitedCharacters,
+        requestedCharacters
+    }: {
+        user?: User,
+        game?: GameWithMods,
+        admin?: boolean,
+        assignedRoles?: GameRoles,
+        invitedCharacters?: CharacterWithMods[],
+        requestedCharacters?: CharacterWithMods[]
+    } = loaderData
     const params = useParams()
-    const navigatate = useNavigate()
     const [confirmation, setConfirmation] = useState<any>(null)
-
-    console.log(game?.activeRoleIds)
 
     const confirm: (redirect: string, warning?: string) => void = (redirect, warning = 'Are you sure?') => {
         setConfirmation({
@@ -52,214 +92,190 @@ export default function EditGame() {
                 { name: "Edit", url: `/games/${params?.gameId}/edit`, id: 'edit' || '', parent: params?.gameId }
             ]}
         >
-            <div className="w-full flex flex-col p-5">
-                <div className="text-3xl font-semibold self-center my-3">
-                    Edit Game
+            <GameEditToolbar
+                currentPage="home"
+                gameId={game?.id}
+            />
+            <div className="w-full flex flex-col">
+                <div className="text-3xl font-semibold self-center my-5">
+                    {game?.name} Host Zone
                 </div>
 
-                {admin && <div className="self-center italic font-light text-bittersweet my-1">
+                {admin && <div className="self-center italic font-light text-bittersweet mb-5">
                     Editing as Admin
                 </div>}
 
-                <div className="flex flex-col sm:flex-row justify-evenly w-full">
+                <div className="flex flex-col lg:flex-row justify-between w-full">
 
-                    <div className="flex flex-col justify-center items-center">
-                        <div className="flex flex-row items-end my-2">
-                            <h2 className="text-2xl font-semibold">{game?.name}</h2>
-                            <Link
-                                to={`/games/${params.gameId}/edit/name`}
-                                className="italic text-base ml-3 underline hover:no-underline"
-                            >
-                                Edit
-                            </Link>
+                    <div className="flex flex-col justify-center items-center bg-slate-200 text-licorice-800 w-full lg:min-w-[22rem] lg:w-[22rem] p-5">
+                        <div className="py-3 font-bold text-2xl border-b-2 border-b-licorice-800 w-full flex flex-row items-center">
+                            {game?.name} <EditButton link={`/games/${params.gameId}/edit/name`} />
                         </div>
-
-                        <div className="flex flex-row items-end my-2">
-                            <div className="text-xl font-semibold">Location: <span className="italic">{game?.location}</span></div>
-                            <Link
-                                to={`/games/${params.gameId}/edit/location`}
-                                className="italic text-base ml-3 underline hover:no-underline"
-                            >
-                                Edit
-                            </Link>
+                        <div className="py-2 text-lg w-full">
+                            <div className="font-semibold text-xl">Status:</div>
+                            <div className="ml-5 text-cinnabar">{game?.status}</div>
                         </div>
-
-                        <div className="flex flex-row items-end my-2">
-                            <div className="text-xl font-semibold">Player Count: <span className="italic">{game?.playerCount}</span></div>
-                            <Link
-                                to={`/games/${params.gameId}/edit/player-count`}
-                                className="italic text-base ml-3 underline hover:no-underline"
-                            >
-                                Edit
-                            </Link>
+                        <div className="py-2 text-lg w-full">
+                            <div className="font-semibold text-xl">Location:</div>
+                            <div className="ml-5 flex flex-row items-center">{game?.location} <EditButton link={`/games/${params.gameId}/edit/location`} /></div>
                         </div>
-
-                        <div className="flex flex-row items-end my-2">
-                            <div className="text-xl font-semibold">Game Awards: {game?.winnerCrowns}👑 {game?.winnerRubies}💎 / {game?.loserStrikes}❌ {game?.loserRubies}💎</div>
-                            <Link
-                                to={`/games/${params.gameId}/edit/awards`}
-                                className="italic text-base ml-3 underline hover:no-underline"
-                            >
-                                Edit
-                            </Link>
+                        <div className="py-2 text-lg w-full">
+                            <div className="font-semibold text-xl">Active Players:</div>
+                            <div className="ml-5 flex flex-row items-center">{game?.participatingCharacterIds.length} / {game?.playerCount} {game?.status === 'ENLISTING' && <EditButton link={`/games/${params.gameId}/edit/player-count`} />}</div>
                         </div>
-
-                        <div className="flex flex-col my-2">
-                            <div className="flex flex-row items-end mb-2">
-                                <div className="text-xl font-semibold">Hosts:</div>
-                                <Link
-                                    to={`/games/${params.gameId}/edit/hosts`}
-                                    className="italic text-base ml-3 underline hover:no-underline"
-                                >
-                                    Manage
-                                </Link>
-                            </div>
-
-                            <div className="self-center flex flex-col">
-                                {game?.hosts?.length === 0 ? <div>
-                                    No Hosts!
-                                </div> : game?.hosts?.map(host => (
-                                    <Link
-                                        to={`/profile/${host.slug}`}
-                                        key={host.id}
-                                    >
-                                        {host.username}
-                                    </Link>
-                                ))}
+                        <div className="py-2 text-lg w-full">
+                            <div className="font-semibold text-xl">Game Rewards:</div>
+                            <div className="ml-5 font-bold flex flex-row items-center">{game?.winnerCrowns}👑 {game?.winnerRubies}💎 / {game?.loserStrikes}❌ {game?.loserRubies}💎 <EditButton link={`/games/${params.gameId}/edit/awards`} /></div>
+                        </div>
+                        <div className="py-2 text-lg w-full">
+                            <div className="font-semibold text-xl flex flex-row items-center">Hosts: <EditButton link={`/games/${params.gameId}/edit/hosts`} /></div>
+                            <div className="ml-5 flex flex-col">{game?.hosts?.map(host => <Link to={`/profile/${host.slug}`} key={host.id}>
+                                @{host.username}
+                            </Link>)}
+                                {game?.hosts?.length === 0 && <div className="text-bittersweet">None</div>}
                             </div>
                         </div>
-
-                        <div className="flex flex-col my-2">
-                            <div className="flex flex-row items-end mb-2">
-                                <div className="text-xl font-semibold">Characters:</div>
-                                {game?.status === 'ENLISTING' ? <Link
-                                    to={`/games/${params.gameId}/edit/characters`}
-                                    className="italic text-base ml-3 underline hover:no-underline"
-                                >
-                                    Manage
-                                </Link> : ''}
-                            </div>
-
-                            <div className="self-center flex flex-col">
-                                {game?.participatingCharacters?.length === 0 ? <div>
-                                    No Characters!
-                                </div> : game?.participatingCharacters?.map(char => (
-                                    <Link
-                                        to={`/gm-realm/characters/${char.id}`}
-                                        key={char.id}
-                                    >
-                                        {char.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="my-2">
-                            <Link
-                                to={`/games/${params.gameId}/edit/game-messages`}
-                                className="italic text-lg underline hover:no-underline"
-                            >
-                                Edit Game Messages
+                        {game?.status === "ENLISTING" && <div className="py-2 text-lg w-full">
+                            <Link to={`/games/${params.gameId}/edit/game-messages`} className="font-semibold text-xl underline hover:no-underline cursor-pointer flex flex-row items-center">
+                                Edit Custom Game Messages <EditButton />
                             </Link>
-                        </div>
-
-                        {game?.status === 'ENLISTING' ? <div className="my-2">
-                            <Link
-                                to={`/games/${params.gameId}/set-active-roles`}
-                                className="italic text-lg underline hover:no-underline"
-                            >
-                                Edit Active Roles
-                            </Link>
-                        </div> : ''}
-
+                        </div>}
                     </div>
 
-                    <div className="flex flex-col justify-center items-center">
+                    <div className="flex flex-col justify-center items-center w-full py-5">
 
-                        <div className="my-2">
-                            <div className="text-4xl font-bold text-cinnabar">{game?.status}</div>
-                        </div>
-
-                        <div className="my-2">
-                            <div>
-                                {game?.status === 'ENLISTING' ? (
-                                    game?.participatingCharacters?.length === game.playerCount &&
-                                        game?.activeRoleIds?.length === game.playerCount &&
-                                        assignedRoles &&
-                                        assignedRoles.assignedRoles.length === game.playerCount &&
-                                        JSON.stringify((assignedRoles.assignedRoles.map(pairing => pairing.roleId)).sort()) === JSON.stringify(game.activeRoleIds.sort()) ? <div
-                                            onClick={() => confirm(`/games/${params.gameId}/start-game`, 'Are you sure you want to start the game? No more players can be added or removed from enlistment after this. Make sure you have your Game Start Phase set up and ready to go!')}
-                                            className="cursor-pointer text-xl border-[1px] border-lime-500 text-lime-500 rounded-lg py-1 px-2 hover:bg-lime-500 hover:text-licorice-800 transition md:text-2xl"
-                                        >
-                                        Start Game
-                                    </div> : <div
-                                        className="cursor-not-allowed text-xl border-[1px] border-slate-500 text-slate-500 rounded-lg py-1 px-2 hover:bg-slate-500 hover:text-licorice-800 transition md:text-2xl"
-                                    >
-                                        <del>Start Game</del>
-                                    </div>) : game?.status === 'ONGOING' ? <div
-                                        onClick={() => confirm(`/games/${params.gameId}/end-game`, 'Are you sure you want to complete the game?')}
-                                        className="cursor-pointer text-xl border-[1px] border-lime-500 text-lime-500 rounded-lg py-1 px-2 hover:bg-lime-500 hover:text-licorice-800 transition md:text-2xl"
-                                    >
-                                        Complete Game
-                                    </div> : <div className="text-xl ml-2">
-                                    Game Complete!
-                                </div>}
+                        <div className="rounded-xl py-5 px-8 m-5 bg-zinc-700 text-zinc-200 w-3/4">
+                            <div className="py-3 font-bold text-2xl w-full flex flex-row justify-center items-center">
+                                {game?.status === 'ENLISTING' ? <>
+                                    Recruits <EditButton link={`/games/${params.gameId}/edit/characters`} />
+                                </> : "Players"}
                             </div>
+                            {game?.participatingCharacters?.length !== 0 ? game?.participatingCharacters?.map(char => <Link to={`/gm-realm/characters/${char.id}`} key={char.id} className="flex flex-row items-center py-2">
+                                <CharacterAvatar
+                                    avatarUrl={char?.avatarUrl || undefined}
+                                    size={"SMALL"}
+                                />
+                                <div className={`mx-4 text-lg font-semibold`}>
+                                    <div>{char.name}</div>
+                                </div>
+                            </Link>) : ""}
+
+                            {game?.status === 'ENLISTING' ? <>
+                                <div className="py-3 font-bold text-2xl w-full flex flex-row justify-center items-center">
+                                    Join Requests <EditButton link={`/games/${params.gameId}/edit/characters`} />
+                                </div>
+                                {requestedCharacters?.length !== 0 ? requestedCharacters?.map(char => <Link to={`/gm-realm/characters/${char.id}`} key={char.id} className="flex flex-row items-center py-2">
+                                    <CharacterAvatar
+                                        avatarUrl={char?.avatarUrl || undefined}
+                                        size={"SMALL"}
+                                    />
+                                    <div className={`mx-4 text-lg font-semibold`}>
+                                        <div>{char.name}</div>
+                                    </div>
+                                </Link>) : "No Join Requests!"}
+                            </> : ""}
+
+                            {game?.status === 'ENLISTING' ? <>
+                                <div className="py-3 font-bold text-2xl w-full flex flex-row justify-center items-center">
+                                    Pending Invites <EditButton link={`/games/${params.gameId}/edit/characters`} />
+                                </div>
+                                {invitedCharacters?.length !== 0 ? invitedCharacters?.map(char => <Link to={`/gm-realm/characters/${char.id}`} key={char.id} className="flex flex-row items-center py-2">
+                                    <CharacterAvatar
+                                        avatarUrl={char?.avatarUrl || undefined}
+                                        size={"SMALL"}
+                                    />
+                                    <div className={`mx-4 text-lg font-semibold`}>
+                                        <div>{char.name}</div>
+                                    </div>
+                                </Link>) : "No Pending Invites!"}
+                            </> : ""}
                         </div>
 
-                        <div className="my-2">
-                            <div
-                                onClick={() => confirm(`/games/${params.gameId}/reset-game`, 'Are you really sure you want to reset the game? This action is irreversible.')}
-                                className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 my-3 hover:bg-transparent hover:text-bittersweet transition md:text-2xl"
-                            >
-                                Reset Game
-                            </div>
-                        </div>
+                        {game?.status === "ENLISTING" ? <div className="rounded-xl p-5 m-5 bg-tropicalindigo text-white w-3/4">
+                            {game.participatingCharacterIds.length < game.playerCount ? <div className="flex flex-row justify-center items-center py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-3">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                You need {game.playerCount - game.participatingCharacterIds.length} more players to start the game!
+                            </div> : ""}
+                            {game.activeRoleIds.length === 0 ? <div className="flex flex-row justify-center items-center py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-3">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                Be sure to set the active roles!
+                            </div> : !(game?.activeRoleIds?.length === game.playerCount &&
+                                assignedRoles &&
+                                assignedRoles.assignedRoles.length === game.playerCount) ? <div className="flex flex-row justify-center items-center py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-3">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                Time to assign roles!
+                            </div> : ""}
+                            {game?.activeRoleIds?.length === game.playerCount && assignedRoles &&
+                                assignedRoles.assignedRoles.length === game.playerCount && !(
+                                    JSON.stringify((assignedRoles.assignedRoles.map(pairing => pairing.roleId)).sort()) === JSON.stringify(game.activeRoleIds.sort())
+                                ) ? <div className="flex flex-row justify-center items-center py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-3">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                Active roles do not match assigned roles!
+                            </div> : ""}
+                            {game?.participatingCharacters?.length === game.playerCount &&
+                                game?.activeRoleIds?.length === game.playerCount &&
+                                assignedRoles &&
+                                assignedRoles.assignedRoles.length === game.playerCount &&
+                                JSON.stringify((assignedRoles.assignedRoles.map(pairing => pairing.roleId)).sort()) === JSON.stringify(game.activeRoleIds.sort()) ? <div className="flex flex-row justify-center items-center py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-3">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                You are ready to start the game!
+                                Double check the game info, set some custom game messages,
+                                and when you're ready to get started,
+                                publish the Day 1 phase with a greeting message to kick things off! Good luck!
+                            </div> : ""}
+                        </div> : ""}
 
-                        <div className="my-4">
-                            <Link
-                                to={`/games/${params.gameId}/reports/edit`}
-                                className="text-xl border-[1px] border-neonblue text-neonblue rounded-lg py-1 px-2 my-3 hover:bg-neonblue hover:text-licorice-800 transition md:text-2xl"
-                            >
-                                Edit Reports...
-                            </Link>
-                        </div>
 
-                        <div className="my-4">
-                            <Link
-                                to={`/games/${params.gameId}/kill-calculator`}
-                                className="text-xl border-[1px] border-neonblue text-neonblue rounded-lg py-1 px-2 my-3 hover:bg-neonblue hover:text-licorice-800 transition md:text-2xl"
-                            >
-                                Kill Calculator
-                            </Link>
-                        </div>
+                        <div className="flex flex-row justify-center items-center py-3">
 
-                        <div className="my-4">
-                            <Link
-                                to={`/games/${params.gameId}/character-status/edit`}
-                                className="text-xl border-[1px] border-neonblue text-neonblue rounded-lg py-1 px-2 my-3 hover:bg-neonblue hover:text-licorice-800 transition md:text-2xl"
-                            >
-                                Edit Character Status
-                            </Link>
-                        </div>
-
-                        <div className="my-2">
-                            <div>
-                                {game?.status === 'ENLISTING' ?
-                                    game?.activeRoleIds?.length === game.playerCount &&
+                            <div className="mr-5">
+                                <div>
+                                    {game?.status === 'ENLISTING' ? (
                                         game?.participatingCharacters?.length === game.playerCount &&
-                                        game?.participatingCharacters?.length === game?.activeRoleIds?.length ? <Link
-                                            to={`/games/${params.gameId}/assign-roles`}
+                                            game?.activeRoleIds?.length === game.playerCount &&
+                                            assignedRoles &&
+                                            assignedRoles.assignedRoles.length === game.playerCount &&
+                                            JSON.stringify((assignedRoles.assignedRoles.map(pairing => pairing.roleId)).sort()) === JSON.stringify(game.activeRoleIds.sort()) ? <div
+                                                onClick={() => confirm(`/games/${params.gameId}/start-game`, 'Are you sure you want to start the game? No more players can be added or removed from enlistment after this. Make sure you have your Game Start Phase set up and ready to go!')}
+                                                className="cursor-pointer text-xl border-[1px] border-lime-500 text-lime-500 rounded-lg py-1 px-2 hover:bg-lime-500 hover:text-licorice-800 transition md:text-2xl"
+                                            >
+                                            Start Game
+                                        </div> : <div
+                                            className="cursor-not-allowed text-xl border-[1px] border-slate-500 text-slate-500 rounded-lg py-1 px-2 hover:bg-slate-500 hover:text-licorice-800 transition md:text-2xl"
+                                        >
+                                            <del>Start Game</del>
+                                        </div>) : game?.status === 'ONGOING' ? <div
+                                            onClick={() => confirm(`/games/${params.gameId}/end-game`, 'Are you sure you want to complete the game?')}
                                             className="cursor-pointer text-xl border-[1px] border-lime-500 text-lime-500 rounded-lg py-1 px-2 hover:bg-lime-500 hover:text-licorice-800 transition md:text-2xl"
                                         >
-                                        Assign Roles
-                                    </Link> : <div
-                                        className="cursor-not-allowed text-xl border-[1px] border-slate-500 text-slate-500 rounded-lg py-1 px-2 hover:bg-slate-500 hover:text-licorice-800 transition md:text-2xl"
-                                    >
-                                        <del>Assign Roles</del>
-                                    </div> : ''}
+                                            Complete Game
+                                        </div> : <div className="text-xl ml-2">
+                                        Game Complete!
+                                    </div>}
+                                </div>
                             </div>
+
+                            <div>
+                                <div
+                                    onClick={() => confirm(`/games/${params.gameId}/reset-game`, 'Are you really sure you want to reset the game? This action is irreversible.')}
+                                    className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 my-3 hover:bg-transparent hover:text-bittersweet transition md:text-2xl"
+                                >
+                                    Reset Game
+                                </div>
+                            </div>
+
                         </div>
+
                     </div>
                 </div>
             </div>

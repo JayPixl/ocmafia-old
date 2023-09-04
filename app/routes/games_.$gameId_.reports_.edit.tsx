@@ -2,6 +2,7 @@ import { EventMessage, EventTypes } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react";
 import { useEffect, useState, useRef } from "react";
+import GameEditToolbar from "~/components/game-edit-toolbar";
 import Layout from "~/components/layout";
 import { requiredTargetFields } from "~/utils/constants";
 import { insertRawGameName } from "~/utils/formatters";
@@ -214,6 +215,10 @@ export default function EditReports() {
                 { name: "Edit", url: `/games/${params?.gameId}/edit`, id: 'edit' || '', parent: params?.gameId }
             ]}
         >
+            <GameEditToolbar
+                currentPage="reports"
+                gameId={game?.id}
+            />
             <div className="p-5">
                 <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center py-5 border-b-licorice-800 border-b-2">
                     <select

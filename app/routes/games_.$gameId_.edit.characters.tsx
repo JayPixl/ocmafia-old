@@ -69,7 +69,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 export default function EditGameCharacters() {
     const loaderData = useLoaderData()
-    const { user, game, admin, joinRequests, pendingInvites }: { user?: User, game?: GameWithMods, admin?: boolean, joinRequests?: CharacterWithMods[], pendingInvites?: CharacterWithMods[] } = loaderData
+    const { user, game, joinRequests, pendingInvites }: { user?: User, game?: GameWithMods, admin?: boolean, joinRequests?: CharacterWithMods[], pendingInvites?: CharacterWithMods[] } = loaderData
     const action = useActionData()
     const fetcher = useFetcher()
 
@@ -95,7 +95,7 @@ export default function EditGameCharacters() {
         fetcher.load(`/fetch/users?${queryParams}`)
     }
 
-    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)}>
+    return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)} className="w-2/3 p-8">
         <div className="text-red-500">
             {action?.error}
         </div>
@@ -103,7 +103,7 @@ export default function EditGameCharacters() {
             name='characterInput'
             value={inputs.characterInput}
             onChange={e => handleChange(e.target.value)}
-            display={`Enter Player Username`}
+            display={`Enter Owner Username`}
             type="text"
         />
         <form method="POST">
@@ -114,8 +114,8 @@ export default function EditGameCharacters() {
             />
             {
                 fetcher?.data?.results?.length > 0 && (
-                    <div className="flex flex-row">
-                        <div>
+                    <div className="flex flex-row my-2">
+                        <div className="font-semibold">
                             {fetcher?.data?.results[0]?.username}
                         </div>
                         <select
@@ -125,7 +125,7 @@ export default function EditGameCharacters() {
                                 characterSelect: e.target.value
                             })}
                             value={inputs.characterSelect}
-                            className="w-32"
+                            className="w-32 rounded-lg bg-slate-200 mx-3"
                         >
                             {fetcher?.data?.results[0]?.characters?.map((character: any) => (
                                 <option key={character.id} value={character.id}>{character.name}</option>
@@ -136,6 +136,7 @@ export default function EditGameCharacters() {
                         {fetcher?.data?.results[0]?.characters?.length > 0 && (
                             <button
                                 type="submit"
+                                className="text-green-600 underline hover:no-underline"
                             >
                                 Send Invite
                             </button>
@@ -152,14 +153,15 @@ export default function EditGameCharacters() {
             />
             {
                 listItems.map(item => (
-                    <div key={item.name} className="flex flex-row">
-                        <div>
+                    <div key={item.name} className="flex flex-row my-2">
+                        <div className="font-semibold">
                             {item?.name} ({item?.owner?.username})
                         </div>
                         <button
                             type="submit"
                             name="_action"
                             value={item.id}
+                            className="text-bittersweet underline hover:no-underline ml-3"
                         >
                             Remove
                         </button>

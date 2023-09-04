@@ -51,6 +51,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
                 &&
 
+                await prisma.phaseActions.deleteMany({
+                    where: {
+                        phaseId: phase.id
+                    }
+                })
+
+                &&
+
                 await prisma.phase.update({
                     where: {
                         id: phase.id

@@ -4,6 +4,7 @@ import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react"
 import { useState } from "react";
 import { v4 } from "uuid";
 import CharacterAvatar from "~/components/character-avatar";
+import GameToolbar from "~/components/game-toolbar";
 import Layout from "~/components/layout";
 import { GameCharacterStatusEmojis, RoleAlignmentEmojis } from "~/utils/constants";
 import { editActions, getGameById, requireHost } from "~/utils/games.server";
@@ -17,6 +18,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     if (!user) return redirect(`/games/${params.gameId}`)
     const { game } = await getGameById(params.gameId || '')
     if (!game) return redirect('/games')
+
+    const { authorized } = await requireHost(request, game.id)
 
     const currentPhase = (game.currentPhaseId ? await prisma.phase.findFirst({
         where: {
@@ -34,7 +37,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     const { actions, actionPhaseId } = await getActionOptions(game.id, character.id)
 
-    return json({ user, game, currentPhase, character, myRole, actions, actionPhaseId })
+    return json({ user, game, currentPhase, character, myRole, actions, actionPhaseId, authorized })
 }
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -121,7 +124,8 @@ export default function Dashboard() {
         character,
         myRole,
         actions,
-        actionPhaseId
+        actionPhaseId,
+        authorized
     }: {
         user?: UserWithMods,
         game?: GameWithMods,
@@ -129,7 +133,8 @@ export default function Dashboard() {
         character?: CharacterWithRole,
         myRole?: RoleWithNotes,
         actions?: { type: ActionType, id?: string, selected?: string, selectedStrategy?: string, options: { name: string, value: string }[] }[],
-        actionPhaseId?: string
+        actionPhaseId?: string,
+        authorized?: boolean
     } = loaderData
     const params = useParams()
     const action = useActionData()
@@ -146,10 +151,13 @@ export default function Dashboard() {
                 { name: game?.name || '', url: `/games/${params?.gameId}`, id: params?.gameId || '', parent: 'games' }
             ]}
         >
+            <GameToolbar
+                currentPage="dashboard"
+                host={authorized}
+                gameId={game?.id}
+                dashboard
+            />
             <div className="p-8 md:p-12">
-                <div className="my-5">
-                    <Link to={`/games/${params?.gameId}`}>← Back to {game?.name}</Link>
-                </div>
 
                 <div className="flex justify-center w-full">
 
@@ -168,20 +176,31 @@ export default function Dashboard() {
                                 '🌙'}
                         </div>
 
-                        <CharacterAvatar
-                            avatarUrl={character?.avatarUrl || undefined}
-                            size='XLARGE'
-                        />
+                        <Link to={`/gm-realm/characters/${character?.id}`} className="flex flex-col items-center justify-center">
+                            <CharacterAvatar
+                                avatarUrl={character?.avatarUrl || undefined}
+                                size='XLARGE'
+                            />
 
-                        <div className="text-xl md:text-2xl font-bold">
-                            {character?.name} {GameCharacterStatusEmojis[currentPhase?.characterStatus?.status.filter(status => status.characterId === character?.id)[0]?.status!]}
-                        </div>
+                            <div className="text-xl md:text-3xl font-bold">
+                                {character?.name} {GameCharacterStatusEmojis[currentPhase?.characterStatus?.status.filter(status => status.characterId === character?.id)[0]?.status!]}
+                            </div>
+                        </Link>
 
                         <div className="flex flex-row items-stretch justify-evenly font-semibold text-xl my-2 bg-dogwood text-licorice-900 rounded-md w-full">
                             <div>STR: {character?.stats.strength}</div>
                             <div>STL: {character?.stats.stealth}</div>
                             <div>SKL: {character?.stats.skill}</div>
                             <div>CHR: {character?.stats.charisma}</div>
+                        </div>
+
+                        <div className="flex flex-col items-start justify-start w-full p-3 sm:max-w-2/3">
+                            <div className="md:text-2xl font-semibold">
+                                {character?.specialAbility.name}
+                            </div>
+                            <div className="italic">
+                                {character?.specialAbility.description}
+                            </div>
                         </div>
 
                         <div className="my-5 border-b-2 border-b-licorice-600 w-full" />
@@ -233,12 +252,12 @@ export default function Dashboard() {
 
                             </div>
 
-                            <button
+                            {actionsInput?.length && actionsInput.length !== 0 && <button
                                 type="submit"
                                 className="text-neonblue px-1 border rounded-xl border-neonblue hover:text-white hover:bg-neonblue font-bold text-xl my-2"
                             >
                                 Save
-                            </button>
+                            </button>}
 
                         </form>
 

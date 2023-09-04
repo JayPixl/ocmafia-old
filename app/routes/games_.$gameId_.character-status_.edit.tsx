@@ -1,11 +1,14 @@
-import { CharGameStatusPairing, GameCharacterStatus, User } from "@prisma/client";
+import { Alignment, CharGameStatusPairing, GameCharacterStatus, PhaseActions, User } from "@prisma/client";
 import { ActionFunction, LoaderArgs, json, redirect } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useParams } from "@remix-run/react";
 import { useState, useEffect } from 'react'
+import { v4 } from "uuid";
 import CharacterAvatar from "~/components/character-avatar";
+import GameEditToolbar from "~/components/game-edit-toolbar";
 import Layout from "~/components/layout";
 import { GameCharacterStatusEmojis } from "~/utils/constants";
 import { getGameById, manageCharacterStatus, requireHost, updateCurrentPhase } from "~/utils/games.server";
+import { prisma } from "~/utils/prisma.server";
 import { CharacterWithMods, GameWithMods, PhaseWithMods } from "~/utils/types";
 import { getUser } from "~/utils/users.server";
 
@@ -33,7 +36,21 @@ export async function loader({ request, params }: LoaderArgs) {
         })
     })
 
-    return json({ user, game, authorized, currentPhase, characters })
+    const gameRoles = await prisma.gameRoles.findUnique({
+        where: {
+            gameId: game.id
+        }
+    })
+
+    const gameActions = await prisma.phaseActions.findMany({
+        where: {
+            phaseId: {
+                in: game?.phases?.map(phase => phase.id)
+            }
+        }
+    })
+
+    return json({ user, game, authorized, currentPhase, characters, gameRoles, gameActions })
 }
 
 export const action: ActionFunction = async ({ request }) => {
@@ -56,10 +73,10 @@ export const action: ActionFunction = async ({ request }) => {
     })
 }
 
-export default function EditCharacterStatus() {
+export default function EditStatus() {
     const params = useParams()
 
-    const { game, user, currentPhase, characters } = useLoaderData()
+    const { game, user, currentPhase, characters, gameRoles, gameActions } = useLoaderData()
     const actionData = useActionData()
 
     const [inputs, setInputs] = useState({
@@ -97,6 +114,10 @@ export default function EditCharacterStatus() {
             { name: "Edit", url: `/games/${params?.gameId}/edit`, id: 'edit' || '', parent: params?.gameId }
         ]}
     >
+        <GameEditToolbar
+            currentPage="status"
+            gameId={game?.id}
+        />
         <div className="p-5">
             <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center py-5 border-b-licorice-800 border-b-2">
                 <select
@@ -111,13 +132,6 @@ export default function EditCharacterStatus() {
                         {`${phase.time} ${phase.dayNumber}`}
                     </option>)}
                 </select>
-
-                <Link
-                    to={`/games/${params.gameId}/reports/edit`}
-                    className="text-xl border-[1px] border-dogwood text-dogwood rounded-lg py-1 px-2 hover:bg-bittersweet hover:border-bittersweet hover:text-white transition md:text-2xl"
-                >
-                    Edit Reports
-                </Link>
             </div>
 
             <div className="w-full flex flex-col bg-dogwood text-licorice-800 rounded-lg p-5">
@@ -143,8 +157,13 @@ export default function EditCharacterStatus() {
                             size='SMALL'
                         />
 
-                        <div className="mx-4 font-bold text-xl">
-                            {status.characterName}
+                        <div className="mx-4 font-bold text-xl flex flex-col">
+                            <div>{status.characterName} ({gameRoles.assignedRoles.filter((role: any) => role.characterId === status.characterId)[0]?.roleName || "Role not set!"})</div>
+                            {gameActions?.filter((actions: PhaseActions) => actions.phaseId === inputs.phaseId)[0]?.actions?.filter((action: any) => action.characterId === status.characterId)?.map((phaseAction: any) => <div key={v4()} className="flex flex-col">
+                                <div>Action Type: <span className="font-normal">{phaseAction.actionType}</span></div>
+                                <div>Target: <span className="font-normal">{phaseAction?.actionTargetId}</span></div>
+                                <div>Strategy: <span className="font-normal">{phaseAction?.actionStrategy || "N/A"}</span></div>
+                            </div>)}
                         </div>
 
                     </Link>
