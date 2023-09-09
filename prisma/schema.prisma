@@ -110,12 +110,17 @@ model Game {
   participatingPlayers      User[]                @relation("PlayerParticipant")
   gameMessages              EventMessages?        @relation("GameEventMessages")
   gameRoles                 GameRoles?            @relation("GameRoles")
+
+  chatRooms GameChatRoom[] @relation("GameChatRoom")
 }
 
 model Phase {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
   draft Boolean?
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
 
   time      Time
   dayNumber Int
@@ -195,6 +200,43 @@ model PhaseCharacterGameStatus {
 
   phase   Phase  @relation(references: [id], fields: [phaseId], onDelete: Cascade, "PhaseGameCharacterStatus")
   phaseId String @unique @db.ObjectId
+}
+
+model GameChatRoom {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String
+
+  game   Game   @relation(references: [id], fields: [gameId], onDelete: Cascade, "GameChatRoom")
+  gameId String @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  type ChatRoomType
+
+  allowedPlayerIds String[]
+
+  messages GameChatMessage[] @relation("GameChatRoomMessage")
+}
+
+model GameChatMessage {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  content String
+
+  senderType SenderType
+
+  senderId          String
+  senderAvatarUrl   String?
+  senderProfileLink String?
+  senderName        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room   GameChatRoom @relation(references: [id], fields: [roomId], onDelete: Cascade, "GameChatRoomMessage")
+  roomId String       @db.ObjectId
 }
 
 type CharGameStatusPairing {
@@ -331,4 +373,18 @@ enum ActionType {
   INDEPENDENT_KILL
   INVESTIGATE
   ANGEL_PROTECT
+}
+
+enum ChatRoomType {
+  MEETING_ROOM
+  PRIVATE
+  ROLEPLAY
+  PRE_GAME
+  POST_GAME
+}
+
+enum SenderType {
+  PARTICIPANT_CHARACTER
+  HOST_USER
+  SPECTATOR_USER
 }

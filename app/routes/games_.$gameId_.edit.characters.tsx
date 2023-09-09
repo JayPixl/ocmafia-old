@@ -96,7 +96,7 @@ export default function EditGameCharacters() {
     }
 
     return <Modal isOpen={true} onClick={() => navigate(`/games/${params.gameId}/edit`)} className="w-2/3 p-8">
-        <div className="text-red-500">
+        <div className="text-bittersweet">
             {action?.error}
         </div>
         <InputField

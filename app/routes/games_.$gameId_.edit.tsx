@@ -1,7 +1,7 @@
 import { GameRoles, User } from "@prisma/client";
 import { LoaderFunction, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useNavigate, useParams } from "@remix-run/react";
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import CharacterAvatar from "~/components/character-avatar";
 import EditButton from "~/components/edit-button";
 import GameEditToolbar from "~/components/game-edit-toolbar";
@@ -82,6 +82,23 @@ export default function EditGame() {
         })
     }
 
+    const [timeDifference, setTimeDifference] = useState(0);
+    const lastPhaseUpdate = game?.phases?.filter(phase => phase.id === game.currentPhaseId)[0]?.updatedAt
+
+    useEffect(() => {
+        if (lastPhaseUpdate) {
+            const timer = setInterval(() => {
+
+                const timestampDate = new Date(lastPhaseUpdate);
+                const currentDate = new Date();
+                const timeDifference = currentDate.getTime() - timestampDate.getTime();
+                setTimeDifference(timeDifference);
+            }, 1000)
+
+            return () => clearInterval(timer)
+        }
+    }, [])
+
     return (
         <Layout
             user={user}
@@ -140,6 +157,11 @@ export default function EditGame() {
                                 Edit Custom Game Messages <EditButton />
                             </Link>
                         </div>}
+                        <div className="py-2 text-lg w-full">
+                            <Link to={`/games/${params.gameId}/edit/chat`} className="font-semibold text-xl underline hover:no-underline cursor-pointer flex flex-row items-center">
+                                Edit Game Chat Channels <EditButton />
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="flex flex-col justify-center items-center w-full py-5">
@@ -233,6 +255,17 @@ export default function EditGame() {
                                 and when you're ready to get started,
                                 publish the Day 1 phase with a greeting message to kick things off! Good luck!
                             </div> : ""}
+                        </div> : game?.status === 'ONGOING' ? <div className="rounded-xl p-5 m-5 bg-tropicalindigo text-white w-3/4">
+                            <div className="flex flex-row justify-center items-center py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-3">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                Time since last report: {`
+                                ${Math.floor(timeDifference / (1000 * 60 * 60))}h 
+                                ${Math.floor(timeDifference / (1000 * 60)) % 60}m 
+                                ${Math.floor(timeDifference / 1000) % 60}s
+                                `}
+                            </div>
                         </div> : ""}
 
 
@@ -245,12 +278,12 @@ export default function EditGame() {
                                             game?.activeRoleIds?.length === game.playerCount &&
                                             assignedRoles &&
                                             assignedRoles.assignedRoles.length === game.playerCount &&
-                                            JSON.stringify((assignedRoles.assignedRoles.map(pairing => pairing.roleId)).sort()) === JSON.stringify(game.activeRoleIds.sort()) ? <div
-                                                onClick={() => confirm(`/games/${params.gameId}/start-game`, 'Are you sure you want to start the game? No more players can be added or removed from enlistment after this. Make sure you have your Game Start Phase set up and ready to go!')}
+                                            JSON.stringify((assignedRoles.assignedRoles.map(pairing => pairing.roleId)).sort()) === JSON.stringify(game.activeRoleIds.sort()) ? <Link
+                                                to={`/games/${game.id}/reports/edit`}
                                                 className="cursor-pointer text-xl border-[1px] border-lime-500 text-lime-500 rounded-lg py-1 px-2 hover:bg-lime-500 hover:text-licorice-800 transition md:text-2xl"
                                             >
                                             Start Game
-                                        </div> : <div
+                                        </Link> : <div
                                             className="cursor-not-allowed text-xl border-[1px] border-slate-500 text-slate-500 rounded-lg py-1 px-2 hover:bg-slate-500 hover:text-licorice-800 transition md:text-2xl"
                                         >
                                             <del>Start Game</del>
@@ -265,15 +298,14 @@ export default function EditGame() {
                                 </div>
                             </div>
 
-                            <div>
+                            {(game?.status === "ENLISTING" || game?.status === "ONGOING") && <div>
                                 <div
                                     onClick={() => confirm(`/games/${params.gameId}/reset-game`, 'Are you really sure you want to reset the game? This action is irreversible.')}
                                     className="cursor-pointer text-xl border-[1px] border-bittersweet bg-bittersweet text-licorice-800 rounded-lg py-1 px-2 my-3 hover:bg-transparent hover:text-bittersweet transition md:text-2xl"
                                 >
                                     Reset Game
                                 </div>
-                            </div>
-
+                            </div>}
                         </div>
 
                     </div>

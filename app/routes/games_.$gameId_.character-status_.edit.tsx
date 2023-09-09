@@ -161,7 +161,7 @@ export default function EditStatus() {
                             <div>{status.characterName} ({gameRoles.assignedRoles.filter((role: any) => role.characterId === status.characterId)[0]?.roleName || "Role not set!"})</div>
                             {gameActions?.filter((actions: PhaseActions) => actions.phaseId === inputs.phaseId)[0]?.actions?.filter((action: any) => action.characterId === status.characterId)?.map((phaseAction: any) => <div key={v4()} className="flex flex-col">
                                 <div>Action Type: <span className="font-normal">{phaseAction.actionType}</span></div>
-                                <div>Target: <span className="font-normal">{phaseAction?.actionTargetId}</span></div>
+                                <div>Target: <span className="font-normal">{characters.filter((char: CharacterWithMods) => char.id === phaseAction?.actionTargetId)[0]?.name || phaseAction.actionTargetId}</span></div>
                                 <div>Strategy: <span className="font-normal">{phaseAction?.actionStrategy || "N/A"}</span></div>
                             </div>)}
                         </div>

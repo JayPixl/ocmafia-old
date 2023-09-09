@@ -59,8 +59,41 @@ export const createGame: (form: {
             winnerCrowns: 1,
             winnerRubies: 25,
             loserStrikes: 1,
-            loserRubies: 10
-
+            loserRubies: 10,
+            chatRooms: {
+                createMany: {
+                    data: [
+                        {
+                            name: "Meeting Room",
+                            type: "MEETING_ROOM",
+                        },
+                        {
+                            name: "Pre-Game",
+                            type: "PRE_GAME",
+                        },
+                        {
+                            name: "Post-Game",
+                            type: "POST_GAME",
+                        },
+                        {
+                            name: "RP 1",
+                            type: "ROLEPLAY",
+                        },
+                        {
+                            name: "RP 2",
+                            type: "ROLEPLAY",
+                        },
+                        {
+                            name: "RP 3",
+                            type: "ROLEPLAY",
+                        },
+                        {
+                            name: "Mafia Chat",
+                            type: "PRIVATE",
+                        }
+                    ]
+                }
+            }
         },
         include: {
             gameMessages: true
@@ -141,7 +174,6 @@ export const getGameById: (
                 time: true,
                 game: true,
                 events: true,
-                _count: true,
                 gameId: true,
                 id: true,
                 draft: true,

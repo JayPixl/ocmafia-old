@@ -6,7 +6,19 @@ import Navigation from "./navigation";
 import { Nav } from "~/utils/navigation";
 import { UserWithMods } from "~/utils/types";
 
-export default function Layout({ children, navigation = false, user, navArray }: { children: React.ReactNode, navigation?: boolean, user?: UserWithMods, navArray?: Nav[] }) {
+export default function Layout({
+    children,
+    navigation = false,
+    user,
+    navArray,
+    gradientBg = false
+}: {
+    children: React.ReactNode,
+    navigation?: boolean,
+    user?: UserWithMods,
+    navArray?: Nav[],
+    gradientBg?: boolean
+}) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const triggerMobileNav = () => {
         setMobileNavOpen(curr => !curr)
@@ -14,7 +26,7 @@ export default function Layout({ children, navigation = false, user, navArray }:
     return (
         <>
             <Outlet />
-            <div className="bg-gradient-to-b from-licorice-700 to-licorice-800 text-dogwood font-ysabeau-office w-full min-h-screen flex flex-col items-stretch">
+            <div className={`${gradientBg ? "bg-gradient-to-b from-licorice-700 to-licorice-800" : "bg-licorice-700"} text-dogwood font-ysabeau-office w-full min-h-screen flex flex-col items-stretch`}>
                 <Navbar user={user} triggerMobileNav={triggerMobileNav} navigation={navigation} unreadMessages={user?.inbox?.inboxItems?.filter(item => item.read === false)?.length} />
                 {navigation ? (
                     <>
@@ -24,7 +36,8 @@ export default function Layout({ children, navigation = false, user, navArray }:
                         </div>
                     </>
                 ) : (
-                    <div className="mt-12">
+                    <div>
+                        <div className="pt-12 w-full" />
                         {children}
                     </div>
                 )}
