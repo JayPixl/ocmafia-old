@@ -16,7 +16,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
         }
     })
 
-    //console.log("CLIENT CONNECTED")
+    console.log("CLIENT CONNECTED")
 
     return eventStream(request.signal, (send) => {
 
@@ -31,7 +31,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
             })
                 .then(currentSnapshot => {
                     if (JSON.stringify(lastSnapshot.sort()) !== JSON.stringify(currentSnapshot.sort())) {
-                        //console.log("TRIGGER CHANGE!")
+                        console.log("TRIGGER CHANGE!")
                         send({ event: chatRoom, data: new Date().toISOString() });
                     }
 
@@ -40,7 +40,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
         }, 500);
 
         return function clear() {
-            //console.log("CLIENT DISCONNECTED")
+            console.log("CLIENT DISCONNECTED")
             clearInterval(timer);
         };
     });
