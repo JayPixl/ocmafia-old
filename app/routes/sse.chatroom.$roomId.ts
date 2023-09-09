@@ -5,7 +5,7 @@ import { prisma } from "~/utils/prisma.server";
 
 export const loader = async ({ request, params }: LoaderArgs) => {
 
-    const chatRoom = params["*"];
+    const chatRoom = params.roomId;
 
     let lastSnapshot = await prisma.gameChatMessage.findMany({
         where: {
