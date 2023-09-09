@@ -32,7 +32,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
                 .then(currentSnapshot => {
                     if (JSON.stringify(lastSnapshot.sort()) !== JSON.stringify(currentSnapshot.sort())) {
                         console.log("TRIGGER CHANGE!")
-                        send({ event: chatRoom, data: new Date().toISOString() });
+                        send({ event: "update", data: new Date().toISOString() });
                     }
 
                     lastSnapshot = currentSnapshot

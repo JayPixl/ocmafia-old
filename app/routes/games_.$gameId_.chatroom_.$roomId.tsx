@@ -117,7 +117,7 @@ export default function ChatRoom() {
             })
     }
 
-    const { user, type, character, chatrooms, authorized } = useLiveLoader<typeof loader>(`/sse/chatroom/${params.roomId}`, `${params.roomId}`, getMessages)
+    const { user, type, character, chatrooms, authorized } = useLiveLoader<typeof loader>(`/sse/chatroom/${params.roomId}`, "update", getMessages)
 
     const [inputs, setInputs] = useState({ message: '' })
     const [messages, setMessages] = useState<GameChatMessage[]>([])
