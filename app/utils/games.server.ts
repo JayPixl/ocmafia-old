@@ -298,6 +298,19 @@ export const manageHosts: (
         ) return {
             error: "This host is already added!"
         }
+
+        if (
+            (await prisma.user.findFirst({
+                where: {
+                    id: host.id
+                },
+                select: {
+                    hostingGameId: true
+                }
+            }))?.hostingGameId
+        ) return {
+            error: "This host is hosting another game!"
+        }
         const result = await prisma.game.update({
             where: {
                 id: game.id
@@ -1266,7 +1279,10 @@ export const EndGame: (
         data: {
             status: 'COMPLETED',
             gameWinnerIds: winnerIds,
-            winningFaction
+            winningFaction,
+            hosts: {
+                set: []
+            }
         }
     })
 
