@@ -1,6 +1,6 @@
 import { GameChatMessage, GameChatRoom } from "@prisma/client";
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
-import { Link, useFetcher, useParams } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData, useParams } from "@remix-run/react";
 import { useState, useRef, useEffect } from "react";
 import GameToolbar from "~/components/game-toolbar";
 import Layout from "~/components/layout";
@@ -106,31 +106,50 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 export default function ChatRoom() {
     const params = useParams()
 
+    const { user, type, character, chatrooms, authorized } = useLoaderData() //useLiveLoader<typeof loader>(`/sse/chatroom/${params.roomId}`, "update", getMessages)
+
+    const [inputs, setInputs] = useState({ message: '' })
+    const [messages, setMessages] = useState<GameChatMessage[]>([])
+    const [sending, setSending] = useState<boolean>(false)
+    const [chatroomsOpen, setChatroomsOpen] = useState(true)
+    const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+
+    const formRef = useRef<HTMLFormElement>(null)
+
+    useEffect(() => {
+        getMessages()
+        window.scrollTo(0, document.documentElement.scrollHeight)
+    }, [])
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const queryParams = new URLSearchParams
+            queryParams.set('lastUpdate', lastUpdate.toISOString())
+            fetch(`/games/${params.gameId}/chatroom/${params.roomId}/get-messages?${queryParams}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data?.messages?.length !== 0) {
+                        getMessages()
+                    }
+                })
+        }, 1000)
+
+        return () => {
+            clearInterval(timer)
+        }
+    }, [])
+
     const getMessages: () => void = () => {
         fetch(`/games/${params.gameId}/chatroom/${params.roomId}/get-messages`)
             .then(res => res.json())
             .then(data => {
                 if (data.messages) {
                     setMessages(l => data.messages)
-                    window.scrollTo(0, document.documentElement.scrollHeight);
+                    window.scrollTo(0, document.documentElement.scrollHeight)
+                    setLastUpdate(new Date(messages[messages.length - 1]?.createdAt || undefined))
                 }
             })
     }
-
-    const { user, type, character, chatrooms, authorized } = useLiveLoader<typeof loader>(`/sse/chatroom/${params.roomId}`, "update", getMessages)
-
-    const [inputs, setInputs] = useState({ message: '' })
-    const [messages, setMessages] = useState<GameChatMessage[]>([])
-    const [sending, setSending] = useState<boolean>(false)
-    const [chatroomsOpen, setChatroomsOpen] = useState(true)
-    const [lastUpdate, setLastUpdate] = useState()
-
-    const formRef = useRef<HTMLFormElement>(null)
-
-    useEffect(() => {
-        getMessages()
-        window.scrollTo(0, document.documentElement.scrollHeight);
-    }, [])
 
     const submitMessage: (e?: React.FormEvent<HTMLFormElement>) => void = (e) => {
         e && e.preventDefault()

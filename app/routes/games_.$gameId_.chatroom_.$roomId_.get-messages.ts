@@ -17,7 +17,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
                         roomId: params.roomId,
                         ...(lastUpdate ? {
                             createdAt: {
-                                gt: lastUpdate
+                                gt: new Date(lastUpdate).toISOString()
                             }
                         } : {})
                     },
@@ -64,7 +64,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
                                 roomId: params.roomId,
                                 ...(lastUpdate ? {
                                     createdAt: {
-                                        gt: lastUpdate
+                                        gt: new Date(lastUpdate).toISOString()
                                     }
                                 } : {})
                             },
@@ -82,7 +82,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
                         roomId: params.roomId,
                         ...(lastUpdate ? {
                             createdAt: {
-                                gt: lastUpdate
+                                gt: new Date(lastUpdate).toISOString()
                             }
                         } : {})
                     }
