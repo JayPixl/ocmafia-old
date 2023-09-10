@@ -17,6 +17,7 @@ import {
 import stylesheet from './tailwind.css'
 import Layout from "./components/layout";
 import { V2_ErrorBoundaryComponent } from "@remix-run/react/dist/routeModules";
+import { useEffect } from "react";
 
 //<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 //<link ></link>
@@ -71,8 +72,9 @@ export const ErrorBoundary: V2_ErrorBoundaryComponent = () => {
 }
 
 export default function App() {
-  const navigate = useNavigate()
-  navigate(`https://ocmafia-fly.fly.dev/`)
+  useEffect(() => {
+    location.href = 'https://ocmafia-fly.fly.dev/'
+  }, [])
   return (
     <html lang="en">
       <head>
