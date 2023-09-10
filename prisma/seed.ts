@@ -19,45 +19,12 @@ async function main() {
         //     if (newStatus.filter(t => t.characterId === s.characterId).length === 0) newStatus.push(s)
         // })
 
-        const update = await prisma.game.update({
+        const update = await prisma.game.updateMany({
             where: {
-                id: game.id
+                name: "Test Game 2"
             },
             data: {
-                chatRooms: {
-                    createMany: {
-                        data: [
-                            {
-                                name: "Meeting Room",
-                                type: "MEETING_ROOM",
-                            },
-                            {
-                                name: "Pre-Game",
-                                type: "PRE_GAME",
-                            },
-                            {
-                                name: "Post-Game",
-                                type: "POST_GAME",
-                            },
-                            {
-                                name: "RP 1",
-                                type: "ROLEPLAY",
-                            },
-                            {
-                                name: "RP 2",
-                                type: "ROLEPLAY",
-                            },
-                            {
-                                name: "RP 3",
-                                type: "ROLEPLAY",
-                            },
-                            {
-                                name: "Mafia Chat",
-                                type: "PRIVATE",
-                            }
-                        ]
-                    }
-                }
+
             }
         })
 

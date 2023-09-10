@@ -10,6 +10,7 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
+  useNavigate,
   useRouteError,
 } from "@remix-run/react";
 
@@ -70,6 +71,8 @@ export const ErrorBoundary: V2_ErrorBoundaryComponent = () => {
 }
 
 export default function App() {
+  const navigate = useNavigate()
+  navigate(`https://ocmafia-fly.fly.dev/`)
   return (
     <html lang="en">
       <head>

@@ -119,7 +119,7 @@ export default function EditStatus() {
             gameId={game?.id}
         />
         <div className="p-5">
-            <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center py-5 border-b-licorice-800 border-b-2">
+            <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center py-5">
                 <select
                     onChange={e => setInputs({
                         ...inputs,
